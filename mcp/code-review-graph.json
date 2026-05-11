@@ -7,8 +7,8 @@
       ],
       "cwd": "/home/jarvis/local-first",
       "env": {},
-      "enabled": false,
-      "notes": "Developer-side code intelligence MCP sidecar. Enable after installing code-review-graph and building .code-review-graph/."
+      "enabled": true,
+      "notes": "Developer-side code intelligence MCP sidecar. Installed with pipx using Python 3.14; graph stored locally in .code-review-graph/."
     }
   }
 }
