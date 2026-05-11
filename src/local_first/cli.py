@@ -10,6 +10,13 @@ from local_first.safety import SafetyError, WorkspaceGuard
 from local_first.tools.filesystem import list_files, read_file
 
 
+def _cli_profile_arg(value: str) -> str:
+    name = value.strip()
+    if not name:
+        raise argparse.ArgumentTypeError("profile name must not be empty")
+    return name
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -103,11 +110,22 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--env-file", help="Optional .env file to load")
     sub = parser.add_subparsers(dest="command")
 
-    health = sub.add_parser("health", help="Check the configured OpenAI-compatible endpoint")
-    health.add_argument("--profile", help="Use a model profile for this check")
+    health = sub.add_parser(
+        "health",
+        help="Check the OpenAI-compatible /v1/models endpoint (env defaults, or profile base_url with --profile)",
+    )
+    health.add_argument(
+        "--profile",
+        type=_cli_profile_arg,
+        help="Use this profile's base_url and auth for the check (overrides LOCAL_FIRST_LLM_* for this command)",
+    )
 
     models = sub.add_parser("models", help="Print /v1/models response")
-    models.add_argument("--profile", help="Use a model profile for this request")
+    models.add_argument(
+        "--profile",
+        type=_cli_profile_arg,
+        help="Use this profile's base_url and auth (overrides LOCAL_FIRST_LLM_* for this command)",
+    )
 
     files = sub.add_parser("files", help="List workspace files read-only")
     files.add_argument("path", nargs="?", default=".")

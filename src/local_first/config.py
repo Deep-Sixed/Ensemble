@@ -46,7 +46,11 @@ def load_config(
         os.getenv("LOCAL_FIRST_WORKSPACE", "/home/jarvis/jarvis/talent-beacon")
     ).expanduser()
 
-    profile_name = profile_override if profile_override is not None else os.getenv("LOCAL_FIRST_PROFILE", "")
+    if profile_override is not None:
+        profile_name = profile_override
+    else:
+        profile_name = os.getenv("LOCAL_FIRST_PROFILE", "").strip()
+
     profile_base_url = None
     profile_model = None
     profile_api_key = None
@@ -62,6 +66,22 @@ def load_config(
         profile_max_tokens = profile.max_tokens
         profile_temperature = profile.temperature
 
+    # CLI `--profile` on commands like `health` and `models`: use the profile JSON
+    # for LLM endpoint fields so LOCAL_FIRST_LLM_BASE_URL does not mask base_url.
+    if profile_override is not None:
+        return LocalFirstConfig(
+            llm_base_url=profile_base_url or "http://localhost:8080/v1",
+            llm_model=profile_model or "qwen3.6-35b-a3b-ud-q4_k_xl",
+            api_key=profile_api_key or "local-first",
+            profile=profile_name,
+            max_tokens=profile_max_tokens or 1024,
+            temperature=float(profile_temperature or 0.2),
+            workspace=workspace,
+            allow_writes=_bool_env("LOCAL_FIRST_ALLOW_WRITES", False),
+            allow_shell=_bool_env("LOCAL_FIRST_ALLOW_SHELL", False),
+            max_file_bytes=int(os.getenv("LOCAL_FIRST_MAX_FILE_BYTES", "200000")),
+        )
+
     return LocalFirstConfig(
         llm_base_url=os.getenv(
             "LOCAL_FIRST_LLM_BASE_URL",
@@ -73,9 +93,9 @@ def load_config(
         ),
         api_key=os.getenv("LOCAL_FIRST_API_KEY", profile_api_key or "local-first"),
         profile=profile_name,
-        max_tokens=int(os.getenv("LOCAL_FIRST_MAX_TOKENS", profile_max_tokens or "1024")),
+        max_tokens=int(os.getenv("LOCAL_FIRST_MAX_TOKENS", str(profile_max_tokens or 1024))),
         temperature=float(
-            os.getenv("LOCAL_FIRST_TEMPERATURE", profile_temperature or "0.2")
+            os.getenv("LOCAL_FIRST_TEMPERATURE", str(profile_temperature or 0.2))
         ),
         workspace=workspace,
         allow_writes=_bool_env("LOCAL_FIRST_ALLOW_WRITES", False),

@@ -347,8 +347,14 @@ Check the endpoint:
 
 ```bash
 local-first health
+local-first health --profile qwen3.6-35b-a3b.local
+local-first health --profile smoke.local
 local-first models
 ```
+
+With `--profile`, `health` and `models` use that JSON profile’s `base_url` and
+`api_key_env` for the request (so `.env` `LOCAL_FIRST_LLM_BASE_URL` does not
+override the profile when you are probing a specific server).
 
 Ask one question:
 
