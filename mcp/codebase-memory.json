@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "codebase-memory": {
+      "command": "codebase-memory-mcp",
+      "args": [
+        "--workspace",
+        "/home/jarvis/jarvis/talent-beacon"
+      ],
+      "env": {},
+      "enabled": false,
+      "notes": "Placeholder for codebase-memory-mcp. Enable after installing/verifying the binary."
+    }
+  }
+}

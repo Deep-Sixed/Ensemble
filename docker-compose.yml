@@ -1,0 +1,54 @@
+services:
+  llm:
+    build:
+      context: .
+      dockerfile: docker/llama-cpp-python.Dockerfile
+    ports:
+      - "${LOCAL_FIRST_SERVER_PORT:-8080}:8080"
+    volumes:
+      - ${LOCAL_FIRST_HOST_MODEL_DIR:-/home/jarvis/openmono.ai/models}:/models:ro
+    environment:
+      MODEL: "${LOCAL_FIRST_MODEL_PATH:-/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf}"
+      MODEL_ALIAS: "${LOCAL_FIRST_MODEL_ALIAS:-qwen3.6-35b-a3b-ud-q4_k_xl}"
+      HOST: "${LOCAL_FIRST_SERVER_HOST:-0.0.0.0}"
+      PORT: "8080"
+      N_CTX: "${LOCAL_FIRST_N_CTX:-8192}"
+      N_THREADS: "${LOCAL_FIRST_N_THREADS:-0}"
+    command:
+      - python
+      - -m
+      - llama_cpp.server
+      - --model
+      - "${LOCAL_FIRST_MODEL_PATH:-/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf}"
+      - --model_alias
+      - "${LOCAL_FIRST_MODEL_ALIAS:-qwen3.6-35b-a3b-ud-q4_k_xl}"
+      - --host
+      - "${LOCAL_FIRST_SERVER_HOST:-0.0.0.0}"
+      - --port
+      - "8080"
+      - --n_ctx
+      - "${LOCAL_FIRST_N_CTX:-8192}"
+      - --n_threads
+      - "${LOCAL_FIRST_N_THREADS:-0}"
+
+  agent:
+    build:
+      context: .
+      dockerfile: docker/agent.Dockerfile
+    profiles:
+      - agent
+    depends_on:
+      - llm
+    environment:
+      LOCAL_FIRST_LLM_BASE_URL: http://llm:8080/v1
+      LOCAL_FIRST_LLM_MODEL: "${LOCAL_FIRST_LLM_MODEL:-qwen3.6-35b-a3b-ud-q4_k_xl}"
+      LOCAL_FIRST_API_KEY: "${LOCAL_FIRST_API_KEY:-local-first}"
+      LOCAL_FIRST_WORKSPACE: /workspace
+      LOCAL_FIRST_ALLOW_WRITES: "${LOCAL_FIRST_ALLOW_WRITES:-false}"
+      LOCAL_FIRST_ALLOW_SHELL: "${LOCAL_FIRST_ALLOW_SHELL:-false}"
+      LOCAL_FIRST_MAX_FILE_BYTES: "${LOCAL_FIRST_MAX_FILE_BYTES:-200000}"
+    volumes:
+      - .:/app
+      - ${LOCAL_FIRST_WORKSPACE:-/home/jarvis/jarvis/talent-beacon}:/workspace:ro
+    working_dir: /app
+    command: ["local-first", "chat", "--classic"]

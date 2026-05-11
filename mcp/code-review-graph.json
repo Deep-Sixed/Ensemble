@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "code-review-graph": {
+      "command": "code-review-graph",
+      "args": [
+        "serve"
+      ],
+      "cwd": "/home/jarvis/local-first",
+      "env": {},
+      "enabled": false,
+      "notes": "Developer-side code intelligence MCP sidecar. Enable after installing code-review-graph and building .code-review-graph/."
+    }
+  }
+}

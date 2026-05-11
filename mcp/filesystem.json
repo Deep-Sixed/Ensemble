@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "local-first-filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/jarvis/jarvis/talent-beacon"
+      ],
+      "env": {},
+      "enabled": true
+    }
+  }
+}
