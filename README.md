@@ -123,8 +123,17 @@ Profiles live under `profiles/`:
 Current profiles:
 
 ```text
+qwen3.6-35b-a3b.lan.json
 qwen3.6-35b-a3b.local.json
 smoke.local.json
+```
+
+Use the LAN profile when the existing Docker `llama-server` is bound to
+`10.0.0.151:7474`:
+
+```bash
+.venv/bin/local-first health --profile qwen3.6-35b-a3b.lan
+curl -fsS http://10.0.0.151:7474/v1/models
 ```
 
 Target Qwen server shape, when running a host-level `llama-server`:
