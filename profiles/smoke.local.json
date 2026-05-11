@@ -1,0 +1,16 @@
+{
+  "provider": "llamacpp",
+  "model": "smoke-test",
+  "base_url": "http://127.0.0.1:8888/v1",
+  "api_key_env": "LLAMACPP_API_KEY",
+  "context_window": 4096,
+  "max_tokens": 512,
+  "temperature": 0.2,
+  "reasoning": false,
+  "cost": {
+    "input": 0,
+    "output": 0,
+    "cache_read": 0,
+    "cache_write": 0
+  }
+}

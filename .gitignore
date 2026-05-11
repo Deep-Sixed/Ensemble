@@ -11,3 +11,9 @@ build/
 
 # Local code intelligence graph
 .code-review-graph/
+
+# Runtime state payloads. Keep directory markers tracked.
+state/checkpoints/*
+!state/checkpoints/.gitkeep
+state/evidence/*
+!state/evidence/.gitkeep

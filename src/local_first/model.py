@@ -11,7 +11,8 @@ def build_chat_model(config: LocalFirstConfig) -> ChatOpenAI:
         model=config.llm_model,
         base_url=config.llm_base_url,
         api_key=config.api_key,
-        temperature=0.2,
+        temperature=config.temperature,
+        max_tokens=config.max_tokens,
     )
 
 

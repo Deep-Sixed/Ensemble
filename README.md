@@ -7,6 +7,11 @@ It runs a GGUF model through an OpenAI-compatible llama.cpp server, connects
 through LangChain, and safely reads or proposes changes against selected local
 repositories.
 
+Local-First is optimized around Qwen3.6-35B-A3B through llama.cpp. Smaller
+models may be used for smoke tests, but they are not the target experience. The
+core bet is scaffold-model fit: local coding models perform much better when the
+harness is designed around their strengths and weaknesses.
+
 This is its own project. It is not a fork of Talent-Beacon or OpenMono. It
 borrows Talent-Beacon's working conventions: Python project layout, Docker
 discipline, `.env.example`, MCP access boundaries, and operator-controlled
@@ -59,6 +64,49 @@ local-first CLI
   -> /models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
 ```
 
+## Model Strategy
+
+Local-First has two inference lanes:
+
+- Target inference: llama.cpp plus Qwen3.6-35B-A3B GGUF.
+- Smoke inference: a tiny/small GGUF only for boot tests and endpoint wiring.
+
+The smoke model proves Docker, llama.cpp, LangChain, MCP, CLI health, and
+endpoint plumbing. The target model proves the Local-First coding-agent thesis.
+
+Profiles live under `profiles/`:
+
+```bash
+.venv/bin/local-first profiles
+```
+
+Current profiles:
+
+```text
+qwen3.6-35b-a3b.local.json
+smoke.local.json
+```
+
+Target Qwen server shape, when running a host-level `llama-server`:
+
+```bash
+export LLAMACPP_API_KEY=noop
+
+llama-server \
+  -m /home/jarvis/openmono.ai/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf \
+  --host 127.0.0.1 \
+  --port 8888 \
+  --jinja \
+  -c 16384 \
+  -ngl 99 \
+  --n-cpu-moe 999 \
+  --flash-attn on
+```
+
+Hardware caveat: Qwen3.6-35B-A3B is the target, but it should be run
+deliberately. Keep context controlled, use llama.cpp MoE/offload settings, and
+use smoke profiles only to debug plumbing.
+
 ## Components
 
 | Area | Choice | Purpose |
@@ -102,9 +150,12 @@ Install it outside the Local-First app venv:
 python3.15 -m pip install --user pipx
 python3.15 -m pipx ensurepath
 source ~/.bashrc
-pipx install code-review-graph
+pipx install --python /usr/bin/python3.14 code-review-graph
 code-review-graph --help
 ```
+
+`code-review-graph` is installed with Python 3.14 because one transitive native
+dependency currently fails to build under Python 3.15.
 
 Build the graph:
 
@@ -290,6 +341,10 @@ boringly reliable.
   models/
     qwen3.6-35b-a3b-ud-q4_k_xl.gguf -> /home/jarvis/openmono.ai/models/...
 
+  profiles/
+    qwen3.6-35b-a3b.local.json
+    smoke.local.json
+
   mcp/
     filesystem.json
     code-review-graph.json
@@ -301,6 +356,15 @@ boringly reliable.
     repo-audit.md
     safe-coding.md
     docker-sandbox.md
+    tools/
+      guarded-tools.md
+    protocols/
+      small-model-native-agent.md
+      patch-proposal.md
+
+  state/
+    checkpoints/
+    evidence/
 
   src/local_first/
     config.py

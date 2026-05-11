@@ -49,6 +49,17 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"{server.name}: {state} ({server.command})")
             return 0
 
+        if args.command == "profiles":
+            from local_first.profiles import list_profiles, load_profile
+
+            for path in list_profiles(args.path):
+                profile = load_profile(path)
+                print(
+                    f"{profile.name}: {profile.provider} {profile.model} "
+                    f"({profile.base_url}, ctx={profile.context_window})"
+                )
+            return 0
+
         if args.command == "ask":
             from local_first.agent import ask
 
@@ -91,6 +102,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     mcp = sub.add_parser("mcp", help="List MCP server configs")
     mcp.add_argument("path", nargs="?", default="mcp")
+
+    profiles = sub.add_parser("profiles", help="List local model profiles")
+    profiles.add_argument("path", nargs="?", default=".")
 
     ask_parser = sub.add_parser("ask", help="Ask the local model one question")
     ask_parser.add_argument("prompt")
