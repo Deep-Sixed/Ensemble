@@ -1,25 +1,51 @@
 # Local-First
 
-Local-First is a local AI dev stack for JARVIS: model, repo context, code
-intelligence, memory, tools, and UI stay local by default.
+Local-First is a lean local AI development substrate for JARVIS: inference,
+privacy, code context, MCP tools, and markdown-based operating guidance stay
+local by default.
 
 It runs a GGUF model through an OpenAI-compatible llama.cpp server, connects
-through LangChain, and safely reads or proposes changes against selected local
-repositories.
+through simple inspection utilities, and exposes local context to external
+agent/coding tools.
 
 Local-First is optimized around Qwen3.6-35B-A3B through llama.cpp. Smaller
 models may be used for smoke tests, but they are not the target experience. The
 core bet is scaffold-model fit: local coding models perform much better when the
 harness is designed around their strengths and weaknesses.
 
-The scaffold is load-bearing. Local-First is not positioned as "run a local
-model through a generic agent loop"; it is positioned as "build a local-first
-coding harness optimized for Qwen-class local models."
+The substrate is load-bearing. Local-First is not positioned as "run a local
+model through a generic agent loop"; it is positioned as a local launchpad for
+Qwen-class coding workflows.
 
 This is its own project. It is not a fork of Talent-Beacon or OpenMono. It
 borrows Talent-Beacon's working conventions: Python project layout, Docker
 discipline, `.env.example`, MCP access boundaries, and operator-controlled
 behavior.
+
+## Purpose
+
+A lean local AI dev substrate for inference, privacy, code context, MCP tools,
+and markdown-based operating guidance.
+
+Local-First should provide:
+
+- model profiles
+- llama.cpp server wiring
+- Docker sandbox/runtime
+- MCP configuration
+- code-index sidecar configs
+- markdown skills
+- simple CLI commands: `local-first health`, `local-first mcp`,
+  `local-first profiles`
+
+Local-First should avoid:
+
+- custom agent loop
+- custom planner
+- auto-edit system
+- dashboard
+- complex memory engine
+- replacing Codex, Cursor, OpenCode, pi, or little-coder
 
 ## Stack V1
 
@@ -27,28 +53,39 @@ Goal: run an AI coding/workflow environment where the model, repo context, code
 intelligence, memory, tools, and UI stay local by default.
 
 ```text
-VS Code / Cursor / TUI / CLI
+VS Code / Cursor / OpenCode / TUI / CLI
         |
         v
-Local AI Client / Agent Runner
+External Agent / Coding Tool
         |
-        +--> Default inference: llama.cpp OpenAI-compatible server
+        v
+Local-First Substrate
         |
-        +--> MCP tools
-        |       +--> filesystem MCP
-        |       +--> Python MCP
-        |       +--> code intelligence MCP
-        |       +--> skills / markdown instructions
+        +-- Inference
+        |     +-- llama.cpp OpenAI-compatible endpoint
+        |     +-- Qwen3.6-35B-A3B target profile
+        |     +-- smoke profile for plumbing checks
         |
-        +--> Code intelligence layer
-        |       +--> code indexing
-        |       +--> Language Server Protocol
-        |       +--> graph/context memory
+        +-- Privacy / Isolation
+        |     +-- Docker Compose
+        |     +-- local volumes
+        |     +-- no cloud inference required
         |
-        +--> Docker sandbox
-                +--> isolated execution
-                +--> isolated dependencies
-                +--> private local volumes
+        +-- MCP
+        |     +-- filesystem MCP
+        |     +-- optional Python MCP
+        |     +-- code-review/code-index sidecars
+        |
+        +-- Code Intelligence
+        |     +-- code indexing
+        |     +-- Language Server Protocol
+        |     +-- CodeGraphContext / codebase-memory-mcp style tools
+        |
+        +-- Extensibility
+              +-- Skills as Markdown
+              +-- project instructions
+              +-- tool usage notes
+              +-- protocol notes
 ```
 
 ## Core Architecture
@@ -61,11 +98,10 @@ Local-First   = local model + tool-control lab mounted against a workspace
 Runtime shape:
 
 ```text
-local-first CLI
-  -> LangChain ChatOpenAI wrapper
-  -> http://localhost:8080/v1
-  -> llama-cpp-python server in Docker
-  -> /models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
+external agent/coding tool
+  -> Local-First endpoint/profile/MCP config
+  -> llama.cpp OpenAI-compatible server
+  -> local GGUF model and local repo context
 ```
 
 ## Model Strategy
@@ -111,9 +147,9 @@ Hardware caveat: Qwen3.6-35B-A3B is the target, but it should be run
 deliberately. Keep context controlled, use llama.cpp MoE/offload settings, and
 use smoke profiles only to debug plumbing.
 
-## Harness Mechanics
+## Support Mechanics
 
-Local-First borrows the small-model-native harness pattern:
+Local-First keeps support primitives for external coding tools:
 
 - Write/Edit separation: `Write` refuses to overwrite existing files; existing
   files must go through `Edit`.
@@ -133,11 +169,11 @@ Useful local checks:
 .venv/bin/local-first checkpoint README.md
 ```
 
-The current implementation still defaults to read-only and patch proposal
-behavior. Automatic writes remain off unless the operator explicitly enables
-them.
+The current implementation still defaults to substrate behavior: inspect
+profiles, inspect MCP config, expose skills, and create checkpoints. Automatic
+writes remain out of v1 scope.
 
-See `docs/harness-roadmap.md` for the staged harness plan.
+See `docs/harness-roadmap.md` for the staged support-mechanics plan.
 
 ## Components
 
@@ -152,6 +188,8 @@ See `docs/harness-roadmap.md` for the staged harness plan.
 | Extensibility | Skills in Markdown | Reusable instructions, workflows, checklists, and project habits |
 | MCP | Filesystem/Python/code intelligence MCP | Controlled tool access |
 | UI | VS Code, Cursor, TUI, CLI | Visual coding, terminal control, or automation |
+
+Local-First is the launchpad, not the airplane.
 
 ## Code Intelligence Layer
 
