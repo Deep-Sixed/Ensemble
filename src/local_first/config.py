@@ -15,7 +15,7 @@ def _bool_env(name: str, default: bool = False) -> bool:
     value = os.getenv(name)
     if value is None:
         return default
-        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 @dataclass(frozen=True)
@@ -32,7 +32,11 @@ class LocalFirstConfig:
     max_file_bytes: int
 
 
-def load_config(env_file: str | Path | None = None) -> LocalFirstConfig:
+def load_config(
+    env_file: str | Path | None = None,
+    *,
+    profile_override: str | None = None,
+) -> LocalFirstConfig:
     if env_file is not None:
         load_dotenv(env_file)
     else:
@@ -42,7 +46,7 @@ def load_config(env_file: str | Path | None = None) -> LocalFirstConfig:
         os.getenv("LOCAL_FIRST_WORKSPACE", "/home/jarvis/jarvis/talent-beacon")
     ).expanduser()
 
-    profile_name = os.getenv("LOCAL_FIRST_PROFILE", "")
+    profile_name = profile_override if profile_override is not None else os.getenv("LOCAL_FIRST_PROFILE", "")
     profile_base_url = None
     profile_model = None
     profile_api_key = None

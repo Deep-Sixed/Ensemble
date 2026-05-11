@@ -13,7 +13,7 @@ from local_first.tools.filesystem import list_files, read_file
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    config = load_config(args.env_file)
+    config = load_config(args.env_file, profile_override=getattr(args, "profile", None))
     guard = WorkspaceGuard(
         config.workspace,
         allow_writes=config.allow_writes,
@@ -103,8 +103,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--env-file", help="Optional .env file to load")
     sub = parser.add_subparsers(dest="command")
 
-    sub.add_parser("health", help="Check the configured OpenAI-compatible endpoint")
-    sub.add_parser("models", help="Print /v1/models response")
+    health = sub.add_parser("health", help="Check the configured OpenAI-compatible endpoint")
+    health.add_argument("--profile", help="Use a model profile for this check")
+
+    models = sub.add_parser("models", help="Print /v1/models response")
+    models.add_argument("--profile", help="Use a model profile for this request")
 
     files = sub.add_parser("files", help="List workspace files read-only")
     files.add_argument("path", nargs="?", default=".")
