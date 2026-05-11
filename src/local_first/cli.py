@@ -60,6 +60,19 @@ def main(argv: list[str] | None = None) -> int:
                 )
             return 0
 
+        if args.command == "skills":
+            from local_first.skills import inject_skill_cards
+
+            print(inject_skill_cards(args.task))
+            return 0
+
+        if args.command == "checkpoint":
+            from local_first.checkpoints import create_checkpoint
+
+            checkpoint = create_checkpoint(guard, args.path)
+            print(f"checkpoint: {checkpoint.snapshot}")
+            return 0
+
         if args.command == "ask":
             from local_first.agent import ask
 
@@ -105,6 +118,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     profiles = sub.add_parser("profiles", help="List local model profiles")
     profiles.add_argument("path", nargs="?", default=".")
+
+    skills = sub.add_parser("skills", help="Preview dynamic skill cards for a task")
+    skills.add_argument("task")
+
+    checkpoint = sub.add_parser("checkpoint", help="Create a file checkpoint")
+    checkpoint.add_argument("path")
 
     ask_parser = sub.add_parser("ask", help="Ask the local model one question")
     ask_parser.add_argument("prompt")

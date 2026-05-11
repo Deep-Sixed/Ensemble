@@ -17,3 +17,6 @@ state/checkpoints/*
 !state/checkpoints/.gitkeep
 state/evidence/*
 !state/evidence/.gitkeep
+!state/evidence/tool-results/
+state/evidence/tool-results/*
+!state/evidence/tool-results/.gitkeep

@@ -12,6 +12,10 @@ models may be used for smoke tests, but they are not the target experience. The
 core bet is scaffold-model fit: local coding models perform much better when the
 harness is designed around their strengths and weaknesses.
 
+The scaffold is load-bearing. Local-First is not positioned as "run a local
+model through a generic agent loop"; it is positioned as "build a local-first
+coding harness optimized for Qwen-class local models."
+
 This is its own project. It is not a fork of Talent-Beacon or OpenMono. It
 borrows Talent-Beacon's working conventions: Python project layout, Docker
 discipline, `.env.example`, MCP access boundaries, and operator-controlled
@@ -106,6 +110,34 @@ llama-server \
 Hardware caveat: Qwen3.6-35B-A3B is the target, but it should be run
 deliberately. Keep context controlled, use llama.cpp MoE/offload settings, and
 use smoke profiles only to debug plumbing.
+
+## Harness Mechanics
+
+Local-First borrows the small-model-native harness pattern:
+
+- Write/Edit separation: `Write` refuses to overwrite existing files; existing
+  files must go through `Edit`.
+- Thinking budget: keep local-model reasoning bounded and force implementation.
+- Dynamic skill injection: inject compact tool/protocol cards only when needed.
+- Workspace discovery: read local README/docs/instructions before editing.
+- Malformed output repair: detect bad tool-call formatting and repair before
+  restarting a turn.
+- Quality monitor: catch empty replies, fake tools, and repeated loops.
+- Checkpointing: snapshot files before any edit-capable flow.
+- Retry with failing tests: second attempt sees the failure output.
+
+Useful local checks:
+
+```bash
+.venv/bin/local-first skills "prepare a patch for the model abstraction"
+.venv/bin/local-first checkpoint README.md
+```
+
+The current implementation still defaults to read-only and patch proposal
+behavior. Automatic writes remain off unless the operator explicitly enables
+them.
+
+See `docs/harness-roadmap.md` for the staged harness plan.
 
 ## Components
 
@@ -367,10 +399,14 @@ boringly reliable.
     evidence/
 
   src/local_first/
+    checkpoints.py
     config.py
+    memory.py
     model.py
     mcp_registry.py
+    quality.py
     sandbox_runner.py
-    memory.py
+    skills.py
+    tool_modes.py
     cli.py
 ```
