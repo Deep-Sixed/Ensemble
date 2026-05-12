@@ -1,6 +1,6 @@
-# Local-First
+# Ensemble
 
-Local-First is a lean local AI development substrate for JARVIS: inference,
+Ensemble is a lean local AI development substrate for JARVIS: inference,
 privacy, code context, MCP tools, and markdown-based operating guidance stay
 local by default.
 
@@ -8,12 +8,13 @@ It runs a GGUF model through an OpenAI-compatible llama.cpp server, connects
 through simple inspection utilities, and exposes local context to external
 agent/coding tools.
 
-Local-First is optimized around Qwen3.6-35B-A3B through llama.cpp. Smaller
-models may be used for smoke tests, but they are not the target experience. The
-core bet is scaffold-model fit: local coding models perform much better when the
-harness is designed around their strengths and weaknesses.
+Ensemble uses Qwen GGUF models through llama.cpp. On the current RTX 3060 Ti
+machine, the default lane is `qwen3-4b-instruct-2507-ud-q4_k_xl` for daily coding
+and low-latency tool use. The larger `qwen3.6-35b-a3b-ud-q4_k_xl` model remains
+available as an explicit reasoning/offload lane, but it should not be the
+default on this VRAM budget.
 
-The substrate is load-bearing. Local-First is not positioned as "run a local
+The substrate is load-bearing. Ensemble is not positioned as "run a local
 model through a generic agent loop"; it is positioned as a local launchpad for
 Qwen-class coding workflows.
 
@@ -27,7 +28,7 @@ behavior.
 A lean local AI dev substrate for inference, privacy, code context, MCP tools,
 and markdown-based operating guidance.
 
-Local-First should provide:
+Ensemble should provide:
 
 - model profiles
 - llama.cpp server wiring
@@ -35,10 +36,10 @@ Local-First should provide:
 - MCP configuration
 - code-index sidecar configs
 - markdown skills
-- simple CLI commands: `local-first health`, `local-first mcp`,
-  `local-first profiles`
+- simple CLI commands: `ensemble health`, `ensemble mcp`,
+  `ensemble profiles`
 
-Local-First should avoid:
+Ensemble should avoid:
 
 - custom agent loop
 - custom planner
@@ -59,11 +60,12 @@ VS Code / Cursor / OpenCode / TUI / CLI
 External Agent / Coding Tool
         |
         v
-Local-First Substrate
+Ensemble Substrate
         |
         +-- Inference
         |     +-- llama.cpp OpenAI-compatible endpoint
-        |     +-- Qwen3.6-35B-A3B target profile
+        |     +-- Qwen3 4B coding default profile
+        |     +-- Qwen3.6 35B explicit reasoning/offload profile
         |     +-- smoke profile for plumbing checks
         |
         +-- Privacy / Isolation
@@ -92,57 +94,94 @@ Local-First Substrate
 
 ```text
 Talent-Beacon = real app / workflow
-Local-First   = local model + tool-control lab mounted against a workspace
+Ensemble      = local model + tool-control lab mounted against a workspace
 ```
 
 Runtime shape:
 
 ```text
 external agent/coding tool
-  -> Local-First endpoint/profile/MCP config
+  -> Ensemble endpoint/profile/MCP config
   -> llama.cpp OpenAI-compatible server
   -> local GGUF model and local repo context
 ```
 
 ## Model Strategy
 
-Local-First has two inference lanes:
+Ensemble has three inference lanes:
 
-- Target inference: llama.cpp plus Qwen3.6-35B-A3B GGUF.
+- Coding/default inference: llama.cpp plus Qwen3 4B Instruct GGUF.
+- Reasoning/offload inference: llama.cpp plus Qwen3.6 35B-A3B GGUF.
 - Smoke inference: a tiny/small GGUF only for boot tests and endpoint wiring.
 
 The smoke model proves Docker, llama.cpp, LangChain, MCP, CLI health, and
-endpoint plumbing. The target model proves the Local-First coding-agent thesis.
+endpoint plumbing. The 4B model is the default daily driver for an RTX 3060 Ti.
+The 35B model is useful for harder reasoning, but it is larger than the card's
+VRAM and should be run deliberately with constrained context and CPU/offload
+settings.
 
 Profiles live under `profiles/`:
 
 ```bash
-.venv/bin/local-first profiles
+.venv/bin/ensemble profiles
 ```
 
 Current profiles:
 
 ```text
+auto.json                         # default: qwen3-4b coding lane
+qwen3-4b-local.json
+qwen3.6-35b-a3b.docker.json
 qwen3.6-35b-a3b.lan.json
 qwen3.6-35b-a3b.local.json
 smoke.local.json
+```
+
+Model selection policy:
+
+```text
+Auto / default  -> qwen3-4b-instruct-2507-ud-q4_k_xl
+Reasoning 35B   -> qwen3.6-35b-a3b-ud-q4_k_xl
+Smoke           -> smoke-test
+```
+
+Leave `ENSEMBLE_PROFILE=auto` for default behavior. Use `--profile` when you
+want the equivalent of picking another model from a model selector:
+
+```bash
+.venv/bin/ensemble ask --profile auto "Summarize this repo."
+.venv/bin/ensemble ask --profile qwen3.6-35b-a3b.local "Reason through this design."
+```
+
+Default Docker lane:
+
+```bash
+docker compose --env-file docker/qwen3-4b.env up -d llm
+.venv/bin/ensemble health --profile auto
+```
+
+Explicit 35B reasoning/offload lane:
+
+```bash
+docker compose --env-file docker/qwen3.6-35b.env up -d llm
+.venv/bin/ensemble health --profile qwen3.6-35b-a3b.docker
 ```
 
 Use the LAN profile when the existing Docker `llama-server` is bound to
 `10.0.0.151:7474`:
 
 ```bash
-.venv/bin/local-first health --profile qwen3.6-35b-a3b.lan
+.venv/bin/ensemble health --profile qwen3.6-35b-a3b.lan
 curl -fsS http://10.0.0.151:7474/v1/models
 ```
 
-Target Qwen server shape, when running a host-level `llama-server`:
+Large Qwen server shape, when running a host-level `llama-server`:
 
 ```bash
 export LLAMACPP_API_KEY=noop
 
 llama-server \
-  -m /home/jarvis/openmono.ai/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf \
+  -m /home/jarvis/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf \
   --host 127.0.0.1 \
   --port 8888 \
   --jinja \
@@ -152,13 +191,13 @@ llama-server \
   --flash-attn on
 ```
 
-Hardware caveat: Qwen3.6-35B-A3B is the target, but it should be run
-deliberately. Keep context controlled, use llama.cpp MoE/offload settings, and
-use smoke profiles only to debug plumbing.
+Hardware caveat: Qwen3.6-35B-A3B is the reasoning lane, but it should be run
+deliberately on an RTX 3060 Ti. Keep context controlled, use llama.cpp
+MoE/offload settings, and prefer the 4B profile for coding/tool-heavy loops.
 
 ## Support Mechanics
 
-Local-First keeps support primitives for external coding tools:
+Ensemble keeps support primitives for external coding tools:
 
 - Write/Edit separation: `Write` refuses to overwrite existing files; existing
   files must go through `Edit`.
@@ -174,8 +213,8 @@ Local-First keeps support primitives for external coding tools:
 Useful local checks:
 
 ```bash
-.venv/bin/local-first skills "prepare a patch for the model abstraction"
-.venv/bin/local-first checkpoint README.md
+.venv/bin/ensemble skills "prepare a patch for the model abstraction"
+.venv/bin/ensemble checkpoint README.md
 ```
 
 The current implementation still defaults to substrate behavior: inspect
@@ -198,7 +237,7 @@ See `docs/harness-roadmap.md` for the staged support-mechanics plan.
 | MCP | Filesystem/Python/code intelligence MCP | Controlled tool access |
 | UI | VS Code, Cursor, TUI, CLI | Visual coding, terminal control, or automation |
 
-Local-First is the launchpad, not the airplane.
+Ensemble is the launchpad, not the airplane.
 
 ## Code Intelligence Layer
 
@@ -219,11 +258,11 @@ Default v1 direction:
 
 ## Code Intelligence: code-review-graph
 
-Local-First can use `code-review-graph` as a developer-side code intelligence
+Ensemble can use `code-review-graph` as a developer-side code intelligence
 MCP sidecar. It builds a local structural graph of the repo under
 `.code-review-graph/` and exposes that graph to AI coding tools through MCP.
 
-Install it outside the Local-First app venv:
+Install it outside the Ensemble app venv:
 
 ```bash
 python3.15 -m pip install --user pipx
@@ -256,7 +295,7 @@ MCP config:
     "code-review-graph": {
       "command": "code-review-graph",
       "args": ["serve"],
-      "cwd": "/home/jarvis/local-first"
+      "cwd": "/home/jarvis/ensemble"
     }
   }
 }
@@ -267,7 +306,7 @@ The graph is local-only and should not be committed.
 First test prompt after setup:
 
 ```text
-Use code-review-graph to inspect this Local-First repo. Give me:
+Use code-review-graph to inspect this Ensemble repo. Give me:
 1. the main entry points,
 2. the most connected files,
 3. the current architecture map,
@@ -278,7 +317,7 @@ Use code-review-graph to inspect this Local-First repo. Give me:
 
 v1 is deliberately conservative:
 
-- Reads are limited to `LOCAL_FIRST_WORKSPACE`.
+- Reads are limited to `ENSEMBLE_WORKSPACE`.
 - Writes are disabled by default.
 - Shell execution is disabled by default.
 - The Docker model mount is read-only.
@@ -289,25 +328,27 @@ v1 is deliberately conservative:
 Create local config:
 
 ```bash
-cd /home/jarvis/local-first
+cd /home/jarvis/ensemble
 cp .env.example .env
 ```
 
 The model is canonical at:
 
 ```text
-/home/jarvis/openmono.ai/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
+/home/jarvis/ensemble/models/qwen3-4b-instruct-2507-ud-q4_k_xl.gguf
+/home/jarvis/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
 ```
 
-`models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf` is a symlink marker only. Docker mounts
-the canonical model directory directly so the container can resolve the file.
+Docker mounts `models/` read-only at `/models`. Choose the active model with
+`ENSEMBLE_MODEL_PATH` and `ENSEMBLE_MODEL_ALIAS`, or use one of the env
+files under `docker/`.
 
 ## Milestone 1: Model Server
 
 Build and start the server:
 
 ```bash
-docker compose up -d llm
+docker compose --env-file docker/qwen3-4b.env up -d llm
 ```
 
 Confirm the OpenAI-compatible models endpoint:
@@ -321,12 +362,18 @@ Confirm a chat completion:
 ```bash
 curl -fsS http://localhost:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer local-first" \
+  -H "Authorization: Bearer ensemble" \
   -d '{
     "model": "qwen3.6-35b-a3b-ud-q4_k_xl",
-    "messages": [{"role": "user", "content": "Say hello from Local-First."}],
+    "messages": [{"role": "user", "content": "Say hello from Ensemble."}],
     "temperature": 0.2
   }'
+```
+
+For the default 4B lane, use:
+
+```json
+"model": "qwen3-4b-instruct-2507-ud-q4_k_xl"
 ```
 
 Stop the server:
@@ -346,26 +393,28 @@ python -m pip install -e .
 Check the endpoint:
 
 ```bash
-local-first health
-local-first health --profile qwen3.6-35b-a3b.local
-local-first health --profile smoke.local
-local-first models
+ensemble health
+ensemble health --profile qwen3-4b-local
+ensemble health --profile qwen3.6-35b-a3b.docker
+ensemble health --profile qwen3.6-35b-a3b.local
+ensemble health --profile smoke.local
+ensemble models
 ```
 
 With `--profile`, `health` and `models` use that JSON profile’s `base_url` and
-`api_key_env` for the request (so `.env` `LOCAL_FIRST_LLM_BASE_URL` does not
+`api_key_env` for the request (so `.env` `ENSEMBLE_LLM_BASE_URL` does not
 override the profile when you are probing a specific server).
 
 Ask one question:
 
 ```bash
-local-first ask "What are you?"
+ensemble ask "What are you?"
 ```
 
 Start a simple loop:
 
 ```bash
-local-first chat --classic
+ensemble chat --classic
 ```
 
 ## Milestone 3: Read-Only Repo Context
@@ -379,19 +428,19 @@ By default, the workspace is:
 List files:
 
 ```bash
-local-first files . --limit 50
+ensemble files . --limit 50
 ```
 
 Read one file:
 
 ```bash
-local-first read README.md
+ensemble read README.md
 ```
 
 Ask with file context:
 
 ```bash
-local-first ask "Summarize this file in five bullets." --file README.md
+ensemble ask "Summarize this file in five bullets." --file README.md
 ```
 
 ## Later Milestones
@@ -414,7 +463,7 @@ boringly reliable.
 ## Project Layout
 
 ```text
-/home/jarvis/local-first
+/home/jarvis/ensemble
   docker-compose.yml
   .env.example
   README.md
@@ -437,7 +486,7 @@ boringly reliable.
     python-tools.json
 
   skills/
-    local-first.md
+    ensemble.md
     repo-audit.md
     safe-coding.md
     docker-sandbox.md
@@ -451,7 +500,7 @@ boringly reliable.
     checkpoints/
     evidence/
 
-  src/local_first/
+  src/ensemble/
     checkpoints.py
     config.py
     memory.py

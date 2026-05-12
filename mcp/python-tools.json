@@ -4,13 +4,13 @@
       "command": "python",
       "args": [
         "-m",
-        "local_first.mcp_python_tools"
+        "ensemble.mcp_python_tools"
       ],
       "env": {
-        "LOCAL_FIRST_WORKSPACE": "/home/jarvis/jarvis/talent-beacon"
+        "ENSEMBLE_WORKSPACE": "/home/jarvis/jarvis/talent-beacon"
       },
       "enabled": false,
-      "notes": "Placeholder for a future Local-First Python MCP tool server."
+      "notes": "Placeholder for a future Ensemble Python MCP tool server."
     }
   }
 }

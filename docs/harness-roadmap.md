@@ -1,6 +1,6 @@
 # Substrate Support Roadmap
 
-Local-First is not a replacement agent framework. It is a local substrate that
+Ensemble is not a replacement agent framework. It is a local substrate that
 supports external coding tools with model profiles, local inference, MCP config,
 code intelligence sidecars, markdown skills, checkpoints, and evidence folders.
 
@@ -50,10 +50,10 @@ tooling are designed for local-model behavior instead of frontier-model behavior
 
 ```text
 External coding tool
-  + Local-First llama.cpp profile
-  + Local-First MCP registry
-  + Local-First code-intelligence sidecars
-  + Local-First markdown skills
-  + Local-First checkpoints/evidence folders
+  + Ensemble llama.cpp profile
+  + Ensemble MCP registry
+  + Ensemble code-intelligence sidecars
+  + Ensemble markdown skills
+  + Ensemble checkpoints/evidence folders
   + Docker/local volume boundaries
 ```

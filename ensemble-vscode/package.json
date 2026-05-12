@@ -1,0 +1,144 @@
+{
+  "name": "ensemble",
+  "displayName": "Ensemble",
+  "description": "Ensemble sidebar and editor commands for local llama.cpp model serving.",
+  "version": "0.2.0",
+  "publisher": "ensemble",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:ensemble.chat",
+    "onCommand:ensemble.checkHealth",
+    "onCommand:ensemble.askSelection",
+    "onCommand:ensemble.askCurrentFile",
+    "onCommand:ensemble.reviewWorkspace",
+    "onCommand:ensemble.applyPatch",
+    "onCommand:ensemble.openSettings"
+  ],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/vscode": "^1.96.0",
+    "@vscode/vsce": "^3.2.1",
+    "typescript": "^5.7.2"
+  },
+  "contributes": {
+    "configuration": {
+      "title": "Ensemble",
+      "properties": {
+        "ensemble.baseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8090/v1",
+          "description": "OpenAI-compatible Ensemble router endpoint."
+        },
+        "ensemble.model": {
+          "type": "string",
+          "default": "qwen2.5-coder-7b-instruct-q4_k_m",
+          "description": "Default Ensemble model. Default is Qwen2.5 Coder 7B."
+        },
+        "ensemble.apiKey": {
+          "type": "string",
+          "default": "ensemble",
+          "description": "API key for the local endpoint, if one is configured."
+        },
+        "ensemble.maxTokens": {
+          "type": "number",
+          "default": 1024,
+          "description": "Maximum tokens for chat completions."
+        },
+        "ensemble.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "description": "Sampling temperature for chat completions."
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ensemble",
+          "title": "Ensemble",
+          "icon": "$(server-process)"
+        }
+      ]
+    },
+    "views": {
+      "ensemble": [
+        {
+          "id": "ensemble.chat",
+          "name": "Chat"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "ensemble.checkHealth",
+        "title": "Ensemble: Check Health"
+      },
+      {
+        "command": "ensemble.askSelection",
+        "title": "Ensemble: Ask About Selection"
+      },
+      {
+        "command": "ensemble.askCurrentFile",
+        "title": "Ensemble: Ask About Current File"
+      },
+      {
+        "command": "ensemble.reviewWorkspace",
+        "title": "Ensemble: Review Workspace"
+      },
+      {
+        "command": "ensemble.applyPatch",
+        "title": "Ensemble: Apply Patch"
+      },
+      {
+        "command": "ensemble.openSettings",
+        "title": "Ensemble: Open Settings"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "ensemble.askSelection",
+          "when": "editorHasSelection",
+          "group": "ensemble@1"
+        },
+        {
+          "command": "ensemble.askCurrentFile",
+          "group": "ensemble@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "ensemble.checkHealth"
+        },
+        {
+          "command": "ensemble.askSelection"
+        },
+        {
+          "command": "ensemble.askCurrentFile"
+        },
+        {
+          "command": "ensemble.reviewWorkspace"
+        },
+        {
+          "command": "ensemble.applyPatch"
+        },
+        {
+          "command": "ensemble.openSettings"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,109 @@
+services:
+  qwen25-coder:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: qwen25-coder
+    command:
+      - --model
+      - /models/qwen2.5-coder-7b-instruct-q4_k_m.gguf
+      - --alias
+      - qwen2.5-coder
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --ctx-size
+      - "32768"
+      - --threads
+      - "6"
+      - --no-webui
+    volumes:
+      - /home/jarvis/ensemble/models:/models:ro
+    networks: [ensemble-net]
+    restart: unless-stopped
+
+  qwen3-4b:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: qwen3-4b
+    command:
+      - --model
+      - /models/qwen3-4b-instruct-2507-ud-q4_k_xl.gguf
+      - --alias
+      - qwen3-4b
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --ctx-size
+      - "32768"
+      - --threads
+      - "6"
+      - --no-webui
+    volumes:
+      - /home/jarvis/ensemble/models:/models:ro
+    networks: [ensemble-net]
+    restart: unless-stopped
+
+  qwen36-35b:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: qwen36-35b
+    command:
+      - --model
+      - /models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
+      - --alias
+      - qwen3.6-35b
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --ctx-size
+      - "8192"
+      - --no-webui
+    volumes:
+      - /home/jarvis/ensemble/models:/models:ro
+    networks: [ensemble-net]
+    restart: unless-stopped
+
+  qwen35-uncensored:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: qwen35-uncensored
+    command:
+      - --model
+      - /models/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf
+      - --alias
+      - qwen3.5-uncensored
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --ctx-size
+      - "32768"
+      - --threads
+      - "6"
+      - --no-webui
+    volumes:
+      - /home/jarvis/ensemble/models:/models:ro
+    networks: [ensemble-net]
+    restart: unless-stopped
+
+  local-model-router:
+    build: ./router
+    container_name: local-model-router
+    environment:
+      DEFAULT_MODEL: qwen2.5-coder
+      QWEN25_CODER_URL: http://qwen25-coder:8080
+      QWEN3_4B_URL: http://qwen3-4b:8080
+      QWEN36_35B_URL: http://qwen36-35b:8080
+      QWEN35_UNCENSORED_URL: http://qwen35-uncensored:8080
+    ports:
+      - "127.0.0.1:8090:8090"
+    networks: [ensemble-net]
+    depends_on:
+      - qwen25-coder
+      - qwen3-4b
+      - qwen36-35b
+      - qwen35-uncensored
+    restart: unless-stopped
+
+networks:
+  ensemble-net:
+    internal: true

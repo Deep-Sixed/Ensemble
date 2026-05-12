@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="${LOCAL_FIRST_ROOT:-/home/jarvis/local-first}"
+ROOT_DIR="${ENSEMBLE_ROOT:-/home/jarvis/ensemble}"
 
 cd "$ROOT_DIR"
 
@@ -11,6 +11,6 @@ if ! command -v code-review-graph >/dev/null 2>&1; then
   exit 127
 fi
 
-echo "[local-first] Building code-review-graph for: $ROOT_DIR"
+echo "[ensemble] Building code-review-graph for: $ROOT_DIR"
 code-review-graph build
 code-review-graph status

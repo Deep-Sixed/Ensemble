@@ -5,7 +5,7 @@
       "args": [
         "serve"
       ],
-      "cwd": "/home/jarvis/local-first",
+      "cwd": "/home/jarvis/ensemble",
       "env": {},
       "enabled": true,
       "notes": "Developer-side code intelligence MCP sidecar. Installed with pipx using Python 3.14; graph stored locally in .code-review-graph/."

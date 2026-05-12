@@ -8,9 +8,17 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+node_modules/
+*.vsix
+
+# Nested VS Code extension build outputs
+ensemble-vscode/dist/
+ensemble-vscode/node_modules/
+ensemble-vscode/*.vsix
 
 # Local code intelligence graph
 .code-review-graph/
+.ensemble/
 
 # Runtime state payloads. Keep directory markers tracked.
 state/checkpoints/*
@@ -20,3 +28,9 @@ state/evidence/*
 !state/evidence/tool-results/
 state/evidence/tool-results/*
 !state/evidence/tool-results/.gitkeep
+
+# Model weights — too large for git
+models/*.gguf
+
+# Local secrets
+secret.env

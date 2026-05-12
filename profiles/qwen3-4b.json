@@ -1,0 +1,16 @@
+{
+  "provider": "llamacpp",
+  "model": "qwen3-4b-instruct-2507-ud-q4_k_xl",
+  "base_url": "http://127.0.0.1:8888/v1",
+  "api_key_env": "LLAMACPP_API_KEY",
+  "context_window": 32768,
+  "max_tokens": 2048,
+  "temperature": 0.2,
+  "reasoning": false,
+  "cost": {
+    "input": 0,
+    "output": 0,
+    "cache_read": 0,
+    "cache_write": 0
+  }
+}

@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "local-first-filesystem": {
+    "ensemble-filesystem": {
       "command": "npx",
       "args": [
         "-y",

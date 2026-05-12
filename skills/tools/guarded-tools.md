@@ -1,6 +1,6 @@
 # Guarded Tools
 
-Local-First tools should be deliberately narrow.
+Ensemble tools should be deliberately narrow.
 
 - Read-only tools are allowed first.
 - Write tools must produce a preview before changing files.

@@ -1,6 +1,6 @@
 # Small-Model-Native Agent Protocol
 
-Local-First is optimized around scaffold-model fit.
+Ensemble is optimized around scaffold-model fit.
 
 - Keep prompts compact and specific.
 - Inject skills only when they match the task.
