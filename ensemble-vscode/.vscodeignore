@@ -3,3 +3,6 @@ node_modules/**
 .vscode/**
 tsconfig.json
 *.vsix
+biome.json
+mise.toml
+.nvmrc
