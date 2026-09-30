@@ -4,9 +4,9 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
-# Canonical install location under JARVIS third-party layout.
-_DEFAULT_REPO_ROOT = Path("/home/jarvis/projects/third-party/ensemble")
-_DEFAULT_WORKSPACE = Path("/home/jarvis/projects/nexus")
+# Canonical install location location.
+_DEFAULT_REPO_ROOT = Path("/opt/ensemble")
+_DEFAULT_WORKSPACE = Path("/opt/workspace")
 
 
 @lru_cache(maxsize=1)

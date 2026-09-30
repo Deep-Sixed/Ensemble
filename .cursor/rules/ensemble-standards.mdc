@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Ensemble Standards
 
-**Scope:** `/home/jarvis/projects/third-party/ensemble`
+**Scope:** `/opt/ensemble`
 
 ## Runtime
 
@@ -16,9 +16,9 @@ alwaysApply: true
 
 ## Paths
 
-Canonical repo root: `/home/jarvis/projects/third-party/ensemble`
+Canonical repo root: `/opt/ensemble`
 
-Use `ENSEMBLE_ROOT`, `ENSEMBLE_HOST_MODEL_DIR`, `ENSEMBLE_WORKSPACE` env vars or `ensemble.paths.repo_root()`. Do not reference `/home/jarvis/ensemble` or `/home/jarvis/projects/ensemble`.
+Use `ENSEMBLE_ROOT`, `ENSEMBLE_HOST_MODEL_DIR`, `ENSEMBLE_WORKSPACE` env vars or `ensemble.paths.repo_root()`. Do not hardcode other paths.
 
 ## Secrets
 

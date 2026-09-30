@@ -1,11 +1,11 @@
 # Ensemble Agent Instructions
 
-Ensemble is a JARVIS local AI substrate. It is **not** Nexus, but it follows the same engineering standards: Python 3.14.5, Node 26.3.0 for the VS Code extension, KeePassXC-only secrets, surgical diffs, and operator-controlled mutations.
+Ensemble is a local AI substrate. It follows these engineering standards: Python 3.14.5, Node 26.3.0 for the VS Code extension, KeePassXC-only secrets, surgical diffs, and operator-controlled mutations.
 
 ## Repository layout
 
 ```text
-/home/jarvis/projects/third-party/ensemble/
+/opt/ensemble/
 ├── src/ensemble/          # Python package (CLI, config, skills, indexing)
 ├── ensemble-vscode/       # VS Code / Cursor extension (TypeScript + Biome)
 ├── router/                # FastAPI multi-model router
@@ -30,11 +30,11 @@ Ensemble is a JARVIS local AI substrate. It is **not** Nexus, but it follows the
 
 | Variable | Default |
 |----------|---------|
-| `ENSEMBLE_ROOT` | `/home/jarvis/projects/third-party/ensemble` |
+| `ENSEMBLE_ROOT` | `/opt/ensemble` |
 | `ENSEMBLE_HOST_MODEL_DIR` | `$ENSEMBLE_ROOT/models` |
-| `ENSEMBLE_WORKSPACE` | `/home/jarvis/projects/nexus` |
+| `ENSEMBLE_WORKSPACE` | `/opt/workspace` |
 
-Never hardcode alternate paths (`/home/jarvis/ensemble`, `/home/jarvis/projects/ensemble`). Use env vars or `ensemble.paths.repo_root()`.
+Never hardcode paths. Use env vars or `ensemble.paths.repo_root()`.
 
 ## Inference stacks
 
@@ -51,14 +51,6 @@ Profiles in `profiles/` select endpoints. Default profile `auto` targets the rou
 - MCP configs are wiring only; load secrets at runtime via the operator shell.
 - Do not embed credentials in git remotes.
 
-## Shared tool bus
-
-For durable memory and cross-agent evidence, use the Nexus MCP bus:
-
-`/home/jarvis/projects/nexus/config.yaml`
-
-Do not create competing per-agent memory stores unless a task explicitly requires isolation.
-
 ## Development workflow
 
 ```bash
@@ -74,13 +66,6 @@ cd ensemble-vscode
 npm install
 npm run compile
 npm run check     # Biome lint + format
-```
-
-Backward-compat symlinks on this host:
-
-```text
-/home/jarvis/ensemble -> /home/jarvis/projects/third-party/ensemble
-/home/jarvis/projects/ensemble -> /home/jarvis/projects/third-party/ensemble
 ```
 
 ## Safety boundaries

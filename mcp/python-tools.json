@@ -7,7 +7,7 @@
         "ensemble.mcp_python_tools"
       ],
       "env": {
-        "ENSEMBLE_WORKSPACE": "/home/jarvis/projects/nexus"
+        "ENSEMBLE_WORKSPACE": "/opt/workspace"
       },
       "enabled": false,
       "notes": "Placeholder for a future Ensemble Python MCP tool server."

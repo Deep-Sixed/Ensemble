@@ -1,6 +1,6 @@
 # Ensemble
 
-Ensemble is a lean local AI development substrate for JARVIS: inference,
+Ensemble is a lean local AI development substrate: inference,
 privacy, code context, MCP tools, and markdown-based operating guidance stay
 local by default.
 
@@ -18,8 +18,7 @@ The substrate is load-bearing. Ensemble is not positioned as "run a local
 model through a generic agent loop"; it is positioned as a local launchpad for
 Qwen-class coding workflows.
 
-This is its own project. It is not a fork of Nexus or OpenMono. It
-borrows Nexus's working conventions: Python project layout, Docker
+This is its own project. It follows these working conventions: Python project layout, Docker
 discipline, `.env.example`, MCP access boundaries, and operator-controlled
 behavior.
 
@@ -93,8 +92,8 @@ Ensemble Substrate
 ## Core Architecture
 
 ```text
-Nexus = real app / workflow
-Ensemble      = local model + tool-control lab mounted against a workspace
+Workspace = real app / workflow
+Ensemble  = local model + tool-control lab mounted against a workspace
 ```
 
 Runtime shape:
@@ -181,7 +180,7 @@ Large Qwen server shape, when running a host-level `llama-server`:
 export LLAMACPP_API_KEY=noop
 
 llama-server \
-  -m /home/jarvis/projects/third-party/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf \
+  -m /opt/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf \
   --host 127.0.0.1 \
   --port 8888 \
   --jinja \
@@ -295,7 +294,7 @@ MCP config:
     "code-review-graph": {
       "command": "code-review-graph",
       "args": ["serve"],
-      "cwd": "/home/jarvis/projects/third-party/ensemble"
+      "cwd": "/opt/ensemble"
     }
   }
 }
@@ -328,7 +327,7 @@ v1 is deliberately conservative:
 Create local config:
 
 ```bash
-cd /home/jarvis/projects/third-party/ensemble
+cd /opt/ensemble
 cp .env.example .env
 make bootstrap
 ```
@@ -336,8 +335,8 @@ make bootstrap
 The model is canonical at:
 
 ```text
-/home/jarvis/projects/third-party/ensemble/models/qwen3-4b-instruct-2507-ud-q4_k_xl.gguf
-/home/jarvis/projects/third-party/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
+/opt/ensemble/models/qwen3-4b-instruct-2507-ud-q4_k_xl.gguf
+/opt/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
 ```
 
 Docker mounts `models/` read-only at `/models`. Choose the active model with
@@ -423,7 +422,7 @@ ensemble chat --classic
 By default, the workspace is:
 
 ```text
-/home/jarvis/projects/nexus
+/opt/workspace
 ```
 
 List files:
@@ -464,7 +463,7 @@ boringly reliable.
 ## Project Layout
 
 ```text
-/home/jarvis/projects/third-party/ensemble/
+/opt/ensemble/
   AGENTS.md
   Makefile
   docker-compose.yml

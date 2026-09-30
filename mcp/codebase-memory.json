@@ -4,7 +4,7 @@
       "command": "codebase-memory-mcp",
       "args": [
         "--workspace",
-        "/home/jarvis/projects/nexus"
+        "/opt/workspace"
       ],
       "env": {},
       "enabled": false,
