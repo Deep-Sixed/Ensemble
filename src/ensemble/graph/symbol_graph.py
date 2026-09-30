@@ -29,20 +29,25 @@ def load_symbol_records(path: str | Path) -> list[Json]:
     with Path(path).open("r", encoding="utf-8") as handle:
         for line in handle:
             stripped = line.strip()
-            if not stripped:
-                continue
-            records.append(json.loads(stripped))
+            if stripped:
+                records.append(json.loads(stripped))
     return records
 
 
 def build_symbol_graph(symbol_records_path: str | Path) -> list[Json]:
-    records = load_symbol_records(symbol_records_path)
+    return build_symbol_graph_records(
+        load_symbol_records(symbol_records_path),
+        source=Path(symbol_records_path).name,
+    )
+
+
+def build_symbol_graph_records(records: list[Json], *, source: str = "context") -> list[Json]:
     facts: list[Json] = [
         {
             "type": "meta",
             "schema_version": 1,
-            "source": Path(symbol_records_path).name,
-            "generated_by": "ensemble graph symbols",
+            "source": source,
+            "generated_by": "ensemble",
         }
     ]
     graph_facts: list[GraphFact] = []
@@ -55,14 +60,7 @@ def build_symbol_graph(symbol_records_path: str | Path) -> list[Json]:
         file_id = _file_id(file_path)
 
         if file_id not in seen_nodes:
-            graph_facts.append(
-                GraphFact(
-                    type="node",
-                    id=file_id,
-                    kind="file",
-                    path=file_path,
-                )
-            )
+            graph_facts.append(GraphFact(type="node", id=file_id, kind="file", path=file_path))
             seen_nodes.add(file_id)
 
         if symbol_id not in seen_nodes:

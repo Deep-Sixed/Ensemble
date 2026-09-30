@@ -25,12 +25,23 @@ class WorkspaceGuard:
 
     def resolve_write_path(self, path: str | Path) -> Path:
         if not self.allow_writes:
-            raise SafetyError("Writes are disabled. Set ENSEMBLE_ALLOW_WRITES=true.")
+            raise SafetyError("Source writes are disabled.")
         return self._resolve(path)
+
+    def resolve_derived_path(self, path: str | Path) -> Path:
+        candidate = self._resolve(path)
+        derived_root = (self.root / ".ensemble").resolve()
+        try:
+            candidate.relative_to(derived_root)
+        except ValueError as exc:
+            raise SafetyError(
+                f"Derived artifacts must stay under {derived_root}: {candidate}"
+            ) from exc
+        return candidate
 
     def require_shell(self) -> None:
         if not self.allow_shell:
-            raise SafetyError("Shell execution is disabled. Set ENSEMBLE_ALLOW_SHELL=true.")
+            raise SafetyError("Shell execution is disabled.")
 
     def _resolve(self, path: str | Path) -> Path:
         raw = Path(path).expanduser()

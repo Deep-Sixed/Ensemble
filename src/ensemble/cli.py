@@ -20,16 +20,30 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.command == "context":
-            from ensemble.context import build_context_packet
+            if args.no_semantic:
+                from ensemble.context import build_context_packet
 
-            packet = build_context_packet(
-                args.task,
-                guard,
-                token_budget=args.token_budget or config.context_token_budget,
-                max_file_bytes=config.max_file_bytes,
-                max_files=args.max_files,
-                skill_root=args.skills,
-            )
+                packet = build_context_packet(
+                    args.task,
+                    guard,
+                    token_budget=args.token_budget or config.context_token_budget,
+                    max_file_bytes=config.max_file_bytes,
+                    max_files=args.max_files,
+                    skill_root=args.skills,
+                )
+            else:
+                from ensemble.semantic import build_semantic_context_packet
+
+                packet = asyncio.run(
+                    build_semantic_context_packet(
+                        args.task,
+                        guard,
+                        token_budget=args.token_budget or config.context_token_budget,
+                        max_file_bytes=config.max_file_bytes,
+                        max_files=args.max_files,
+                        skill_root=args.skills,
+                    )
+                )
             print(json.dumps(packet.to_dict(), indent=2))
             return 0
 
@@ -65,6 +79,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "lsp":
             asyncio.run(
                 _run_lsp_action(
+                    guard,
                     args.action,
                     args.file,
                     getattr(args, "line", None),
@@ -75,11 +90,11 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         if args.command == "symbols":
-            asyncio.run(_run_symbols_action(args.path, args.out))
+            asyncio.run(_run_symbols_action(guard, args.path, args.out))
             return 0
 
         if args.command == "graph":
-            _run_graph_action(args.path, args.out)
+            _run_graph_action(guard, args.path, args.out)
             return 0
 
         if args.command == "ask":
@@ -115,6 +130,11 @@ def build_parser() -> argparse.ArgumentParser:
     context.add_argument("--token-budget", type=int, help="Maximum estimated context tokens")
     context.add_argument("--max-files", type=int, default=40, help="Maximum ranked files to consider")
     context.add_argument("--skills", default="skills", help="Skill-card directory")
+    context.add_argument(
+        "--no-semantic",
+        action="store_true",
+        help="Skip LSP/symbol enrichment and use workspace/Git context only",
+    )
 
     sub.add_parser("health", help="Check the configured downstream endpoint")
     sub.add_parser("models", help="Print the endpoint's /v1/models response")
@@ -160,6 +180,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 async def _run_lsp_action(
+    guard: WorkspaceGuard,
     action: str,
     file: str,
     line: int | None = None,
@@ -174,21 +195,22 @@ async def _run_lsp_action(
         flatten_document_symbols,
     )
 
+    resolved_file = guard.resolve_read_path(file)
     async with LspServerManager() as manager:
         if action == "hover":
             if line is None or character is None:
                 raise ValueError("hover requires line and character")
-            result = await manager.hover(file, line, character)
+            result = await manager.hover(resolved_file, line, character)
         elif action == "definition":
             if line is None or character is None:
                 raise ValueError("definition requires line and character")
-            result = await manager.definition(file, line, character)
+            result = await manager.definition(resolved_file, line, character)
         elif action == "references":
             if line is None or character is None:
                 raise ValueError("references requires line and character")
-            result = await manager.references(file, line, character)
+            result = await manager.references(resolved_file, line, character)
         else:
-            result = await manager.document_symbols(file)
+            result = await manager.document_symbols(resolved_file)
             if flat:
                 result = flatten_document_symbols(result)
 
@@ -200,16 +222,22 @@ async def _run_lsp_action(
     print(json.dumps(result, indent=2))
 
 
-async def _run_symbols_action(path: str, out: str) -> None:
+async def _run_symbols_action(guard: WorkspaceGuard, path: str, out: str) -> None:
     from ensemble.indexing.symbol_index import write_symbol_index
-    count = await write_symbol_index(path, out)
-    print(f"indexed {count} symbol(s) -> {out}")
+
+    root = guard.resolve_read_path(path)
+    output = guard.resolve_derived_path(out)
+    count = await write_symbol_index(root, output, repo_root=guard.root)
+    print(f"indexed {count} symbol(s) -> {output}")
 
 
-def _run_graph_action(path: str, out: str) -> None:
+def _run_graph_action(guard: WorkspaceGuard, path: str, out: str) -> None:
     from ensemble.graph.symbol_graph import write_symbol_graph
-    count = write_symbol_graph(path, out)
-    print(f"wrote {count} graph fact(s) -> {out}")
+
+    source = guard.resolve_read_path(path)
+    output = guard.resolve_derived_path(out)
+    count = write_symbol_graph(source, output)
+    print(f"wrote {count} graph fact(s) -> {output}")
 
 
 def run_chat(client: EnsembleClient) -> int:
