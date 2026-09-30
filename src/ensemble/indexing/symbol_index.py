@@ -54,7 +54,7 @@ async def index_symbols(
     manager: LspServerManager | None = None,
 ) -> list[SymbolRecord]:
     owns_manager = manager is None
-    active_manager = manager or LspServerManager()
+    active_manager = manager or LspServerManager(max_root=repo_root)
     root_path = Path(root).resolve()
     records: list[SymbolRecord] = []
 

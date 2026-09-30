@@ -37,7 +37,7 @@ async def build_semantic_context_packet(
         skill_root=skill_root,
     )
 
-    manager = LspServerManager()
+    manager = LspServerManager(max_root=guard.root)
     symbol_records: list[dict[str, Any]] = []
     try:
         for file_info in packet.files:
@@ -78,24 +78,14 @@ async def build_semantic_context_packet(
             except Exception:
                 defs = []
             if defs:
-                definitions.append(
-                    {
-                        "symbol": str(symbol["qualified_name"]),
-                        "locations": [_location_to_dict(item, guard.root) for item in defs],
-                    }
-                )
+                definitions.append(_navigation_entry(symbol, defs, guard.root))
 
             try:
                 refs = await manager.references(absolute, line, character)
             except Exception:
                 refs = []
             if refs:
-                references.append(
-                    {
-                        "symbol": str(symbol["qualified_name"]),
-                        "locations": [_location_to_dict(item, guard.root) for item in refs[:50]],
-                    }
-                )
+                references.append(_navigation_entry(symbol, refs[:50], guard.root))
     finally:
         await manager.close_all()
 
@@ -146,14 +136,40 @@ def rank_symbol_records(task: str, symbols: list[dict[str, Any]]) -> list[dict[s
     return sorted(symbols, key=score)
 
 
-def _location_to_dict(location: LspLocation, root: Path) -> dict[str, Any]:
-    payload = location.to_dict()
-    raw_path = Path(str(payload.get("file_path", "")))
+def _navigation_entry(
+    symbol: dict[str, Any],
+    locations: list[LspLocation],
+    root: Path,
+) -> dict[str, Any]:
+    """Keep in-workspace locations; count (but never emit) anything outside it."""
+    inside: list[dict[str, Any]] = []
+    external = 0
+    for location in locations:
+        payload = _location_to_dict(location, root)
+        if payload is None:
+            external += 1
+        else:
+            inside.append(payload)
+    return {
+        "symbol": str(symbol["qualified_name"]),
+        "locations": inside,
+        "external_locations": external,
+    }
+
+
+def _location_to_dict(location: LspLocation, root: Path) -> dict[str, Any] | None:
+    """Return a workspace-relative location, or None when it lies outside the workspace."""
     try:
-        payload["file_path"] = raw_path.resolve().relative_to(root).as_posix()
+        relative = Path(location.file_path).resolve().relative_to(root)
     except (OSError, ValueError):
-        payload["file_path"] = raw_path.as_posix()
-    return payload
+        return None
+    return {
+        "file_path": relative.as_posix(),
+        "start_line": location.start_line,
+        "start_character": location.start_character,
+        "end_line": location.end_line,
+        "end_character": location.end_character,
+    }
 
 
 def _render_semantic_context(

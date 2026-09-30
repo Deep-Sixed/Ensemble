@@ -446,8 +446,13 @@ class LspServerManager:
         self,
         configs: list[LspServerConfig] | None = None,
         workspace_markers: tuple[str, ...] | None = None,
+        *,
+        max_root: str | Path | None = None,
     ) -> None:
         self.configs = configs or default_configs()
+        # Hard ceiling for root discovery: a language server is never launched
+        # with a workspace root above this directory.
+        self.max_root = Path(max_root).resolve() if max_root is not None else None
         self.workspace_markers = workspace_markers or (
             ".git",
             "pyproject.toml",
@@ -469,14 +474,19 @@ class LspServerManager:
         path = Path(file_path).resolve()
         directory = path if path.is_dir() else path.parent
 
+        if self.max_root is not None and not directory.is_relative_to(self.max_root):
+            raise ValueError(f"LSP file is outside the workspace root {self.max_root}: {path}")
+
         for candidate in (directory, *directory.parents):
+            if self.max_root is not None and not candidate.is_relative_to(self.max_root):
+                break
             for marker in self.workspace_markers:
                 if "*" in marker:
                     if any(candidate.glob(marker)):
                         return candidate
                 elif (candidate / marker).exists():
                     return candidate
-        return directory
+        return self.max_root if self.max_root is not None else directory
 
     async def get_client(self, file_path: str | Path) -> LspClient | None:
         path = Path(file_path).resolve()

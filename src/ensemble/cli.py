@@ -196,7 +196,7 @@ async def _run_lsp_action(
     )
 
     resolved_file = guard.resolve_read_path(file)
-    async with LspServerManager() as manager:
+    async with LspServerManager(max_root=guard.root) as manager:
         if action == "hover":
             if line is None or character is None:
                 raise ValueError("hover requires line and character")
