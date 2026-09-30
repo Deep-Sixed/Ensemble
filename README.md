@@ -82,6 +82,19 @@ Workspace / IDE / Git / LSP
 The local symbol graph answers **"what code matters for this request?"** and is
 disposable. Durable project knowledge belongs elsewhere.
 
+### Workspace boundary
+
+Every read stays under `ENSEMBLE_WORKSPACE`. Language servers are started with
+a root no higher than the workspace, even inside a larger Git repository, and
+definition/reference locations outside the workspace are counted in
+`external_locations` rather than emitted as paths.
+
+### Relevance
+
+Files are ranked by task terms in their path, identifier matches in their
+content (camelCase/snake_case aware), and uncommitted Git changes, before LSP
+enrichment adds symbols, definitions and references.
+
 ## Configuration
 
 ```bash
