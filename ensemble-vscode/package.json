@@ -1,7 +1,7 @@
 {
   "name": "ensemble",
   "displayName": "Ensemble",
-  "description": "Ensemble sidebar and editor commands for local llama.cpp model serving.",
+  "description": "Ensemble repository intelligence and code-context extension.",
   "version": "0.2.0",
   "publisher": "ensemble",
   "license": "UNLICENSED",
@@ -45,27 +45,27 @@
         "ensemble.baseUrl": {
           "type": "string",
           "default": "http://127.0.0.1:8090/v1",
-          "description": "OpenAI-compatible Ensemble router endpoint."
+          "description": "OpenAI-compatible downstream endpoint used by diagnostic commands."
         },
         "ensemble.model": {
           "type": "string",
-          "default": "qwen2.5-coder-7b-instruct-q4_k_m",
-          "description": "Default Ensemble model. Default is Qwen2.5 Coder 7B."
+          "default": "auto",
+          "description": "Model identifier used by optional downstream diagnostic requests."
         },
         "ensemble.apiKey": {
           "type": "string",
           "default": "ensemble",
-          "description": "API key for the local endpoint, if one is configured."
+          "description": "API key for the configured downstream endpoint, if required."
         },
         "ensemble.maxTokens": {
           "type": "number",
           "default": 1024,
-          "description": "Maximum tokens for chat completions."
+          "description": "Maximum tokens for diagnostic chat completions."
         },
         "ensemble.temperature": {
           "type": "number",
           "default": 0.2,
-          "description": "Sampling temperature for chat completions."
+          "description": "Sampling temperature for diagnostic chat completions."
         }
       }
     },
