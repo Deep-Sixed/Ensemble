@@ -18,9 +18,9 @@ The substrate is load-bearing. Ensemble is not positioned as "run a local
 model through a generic agent loop"; it is positioned as a local launchpad for
 Qwen-class coding workflows.
 
-This is its own project. It is not a fork of OpenMono. It follows a small
-set of working conventions: Python project layout, Docker discipline,
-`.env.example`, MCP access boundaries, and operator-controlled behavior.
+This is its own project. It follows a small set of working conventions:
+Python project layout, Docker discipline, `.env.example`, MCP access
+boundaries, and operator-controlled behavior.
 
 ## Purpose
 
