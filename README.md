@@ -1,78 +1,106 @@
 # Ensemble
 
-Ensemble is the developer-facing client layer for the local AI stack.
+Ensemble is a **repository intelligence / code context engine** for AI-assisted
+development.
 
-It owns editor and CLI ergonomics, local code context, LSP queries, disposable
-symbol indexes, skill cards, and lightweight pre-edit checkpoints. It does not
-host models, choose inference runtimes, route providers, own long-running agent
-execution, or maintain a durable knowledge graph.
+Its primary job is upstream preparation: discover relevant workspace content,
+collect Git state, rank and prune context, attach task-relevant instructions,
+and emit a bounded structured packet for downstream agents, routers, or model
+gateways.
+
+It does not host models, route providers, manage autonomous agent loops, own
+durable project memory, or act as a provenance ledger.
+
+## Primary API
+
+```bash
+ensemble context "Fix authentication timeout handling"
+```
+
+The command emits JSON with a stable top-level contract:
+
+```json
+{
+  "schema_version": 1,
+  "task": "Fix authentication timeout handling",
+  "workspace": "/path/to/repo",
+  "files": [],
+  "symbols": [],
+  "definitions": [],
+  "references": [],
+  "git_changes": {},
+  "instructions": [],
+  "context": "...",
+  "token_estimate": 0,
+  "token_budget": 12000,
+  "truncated": false
+}
+```
+
+PRs that deepen semantic intelligence populate the symbol/definition/reference
+fields without changing the role of Ensemble.
 
 ## Responsibility boundary
 
 ```text
-VS Code / CLI
-      |
-      v
-   Ensemble
-      |
-      +-- LSP / symbols / skills / local context
-      |
-      v
-downstream OpenAI-compatible endpoint
+Workspace / IDE / Git / LSP
+           |
+           v
+       Ensemble
+  repository intelligence
+           |
+     rank / prune / annotate
+           |
+           v
+ structured context packet
+           |
+           v
+ downstream agent/router/model gateway
 ```
 
-In the broader stack, model/runtime fulfillment belongs downstream (for example
-InferenceDeck), routing/policy belongs to the routing layer (for example
-Cerberus), durable agent execution belongs to an agent runtime, and persistent
-context/provenance belongs to their dedicated systems.
+### Ensemble owns
 
-## What stays in Ensemble
+- workspace discovery
+- Git change context
+- LSP queries
+- symbol indexing
+- disposable code graphs
+- relevance ranking
+- token-budgeted context assembly
+- task-relevant skill/instruction injection
+- VS Code integration
 
-- VS Code extension
-- thin CLI and HTTP client
-- LSP queries: hover, definition, references, document symbols
-- disposable symbol index and lightweight symbol graph
-- local review/impact lookup
-- task-relevant skill cards
-- read-only workspace inspection
-- lightweight pre-edit checkpoints
+### Ensemble does not own
 
-## What Ensemble intentionally does not own
-
-- llama.cpp or model-process lifecycle
-- Docker/systemd model hosting
-- model fallback or provider routing
-- MCP server registry
-- durable agent scheduling or subagents
-- persistent memory/knowledge graphs
+- llama.cpp/model lifecycle
+- model or provider routing
+- autonomous agent loops
+- MCP server orchestration
+- durable project memory
 - provenance/event ledgers
-- general-purpose sandbox orchestration
+
+The local symbol graph answers **"what code matters for this request?"** and is
+disposable. Durable project knowledge belongs elsewhere.
 
 ## Configuration
+
+```bash
+export ENSEMBLE_WORKSPACE=/path/to/project
+export ENSEMBLE_CONTEXT_TOKEN_BUDGET=12000
+export ENSEMBLE_MAX_FILE_BYTES=200000
+```
+
+Optional diagnostic downstream client:
 
 ```bash
 export ENSEMBLE_BASE_URL=http://127.0.0.1:8090/v1
 export ENSEMBLE_MODEL=auto
 export ENSEMBLE_API_KEY=ensemble
-export ENSEMBLE_WORKSPACE=/path/to/project
 ```
 
-Optional:
+## Other CLI commands
 
 ```bash
-export ENSEMBLE_MAX_FILE_BYTES=200000
-export ENSEMBLE_CHECKPOINT_DIR=.ensemble/checkpoints
-```
-
-## CLI
-
-```bash
-ensemble health
-ensemble models
-ensemble ask "Summarize this repository"
-ensemble ask "Review this file" --file src/example.py
-ensemble chat
-
 ensemble files
 ensemble read README.md
 ensemble skills "review this patch"
@@ -85,9 +113,13 @@ ensemble lsp symbols src/example.py
 
 ensemble symbols src --out .ensemble/symbols.jsonl
 ensemble graph .ensemble/symbols.jsonl --out .ensemble/symbol-graph.jsonl
-```
 
-The symbol graph is a disposable developer index, not a source of durable truth.
+# Diagnostic only:
+ensemble health
+ensemble models
+ensemble ask "Summarize this repository"
+ensemble chat
+```
 
 ## Development
 

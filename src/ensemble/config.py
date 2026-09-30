@@ -21,6 +21,7 @@ class EnsembleConfig:
     workspace: Path
     max_file_bytes: int
     checkpoint_dir: Path
+    context_token_budget: int
 
 
 def load_config(env_file: str | Path | None = None) -> EnsembleConfig:
@@ -35,4 +36,5 @@ def load_config(env_file: str | Path | None = None) -> EnsembleConfig:
         checkpoint_dir=Path(
             os.getenv("ENSEMBLE_CHECKPOINT_DIR", ".ensemble/checkpoints")
         ).expanduser(),
+        context_token_budget=int(os.getenv("ENSEMBLE_CONTEXT_TOKEN_BUDGET", "12000")),
     )

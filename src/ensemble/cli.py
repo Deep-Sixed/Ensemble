@@ -19,6 +19,20 @@ def main(argv: list[str] | None = None) -> int:
     client = EnsembleClient(config)
 
     try:
+        if args.command == "context":
+            from ensemble.context import build_context_packet
+
+            packet = build_context_packet(
+                args.task,
+                guard,
+                token_budget=args.token_budget or config.context_token_budget,
+                max_file_bytes=config.max_file_bytes,
+                max_files=args.max_files,
+                skill_root=args.skills,
+            )
+            print(json.dumps(packet.to_dict(), indent=2))
+            return 0
+
         if args.command == "health":
             ok, message = client.health()
             print(("OK: " if ok else "FAIL: ") + message)
@@ -91,12 +105,18 @@ def main(argv: list[str] | None = None) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ensemble",
-        description="Developer-facing client for local code context and downstream AI services.",
+        description="Repository intelligence and code-context engine.",
     )
     parser.add_argument("--env-file", help="Optional .env file to load")
     sub = parser.add_subparsers(dest="command")
 
-    sub.add_parser("health", help="Check the configured OpenAI-compatible endpoint")
+    context = sub.add_parser("context", help="Assemble a structured code-context packet")
+    context.add_argument("task", help="Task or question the context should support")
+    context.add_argument("--token-budget", type=int, help="Maximum estimated context tokens")
+    context.add_argument("--max-files", type=int, default=40, help="Maximum ranked files to consider")
+    context.add_argument("--skills", default="skills", help="Skill-card directory")
+
+    sub.add_parser("health", help="Check the configured downstream endpoint")
     sub.add_parser("models", help="Print the endpoint's /v1/models response")
 
     files = sub.add_parser("files", help="List workspace files read-only")
@@ -131,11 +151,11 @@ def build_parser() -> argparse.ArgumentParser:
     graph.add_argument("path")
     graph.add_argument("--out", default=".ensemble/symbol-graph.jsonl")
 
-    ask_parser = sub.add_parser("ask", help="Ask the configured downstream endpoint")
+    ask_parser = sub.add_parser("ask", help="Diagnostic request to the downstream endpoint")
     ask_parser.add_argument("prompt")
     ask_parser.add_argument("--file", help="Include one workspace file as context")
 
-    sub.add_parser("chat", help="Start a simple prompt loop")
+    sub.add_parser("chat", help="Diagnostic prompt loop")
     return parser
 
 
@@ -193,7 +213,7 @@ def _run_graph_action(path: str, out: str) -> None:
 
 
 def run_chat(client: EnsembleClient) -> int:
-    print("Ensemble chat. Type /quit to exit.")
+    print("Ensemble diagnostic chat. Type /quit to exit.")
     while True:
         prompt = input("> ").strip()
         if prompt in {"/q", "/quit", "exit"}:
