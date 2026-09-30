@@ -71,3 +71,52 @@ def test_context_packet_is_structured_and_budgeted(tmp_path: Path) -> None:
     assert payload["definitions"] == []
     assert payload["references"] == []
     assert payload["token_estimate"] <= 100
+
+
+def test_ranking_finds_files_by_identifier_content(tmp_path: Path) -> None:
+    (tmp_path / "src" / "services").mkdir(parents=True)
+    (tmp_path / "src" / "net").mkdir(parents=True)
+    session = tmp_path / "src" / "services" / "session.py"
+    session.write_text(
+        "def authenticate_user(token, timeout_seconds=30):\n    return token\n",
+        encoding="utf-8",
+    )
+    request = tmp_path / "src" / "net" / "request.py"
+    request.write_text("class RequestTimeoutError(Exception):\n    pass\n", encoding="utf-8")
+    for index in range(20):
+        noise = tmp_path / "src" / f"module_{index:02d}.py"
+        noise.write_text(f"def helper_{index}():\n    return {index}\n", encoding="utf-8")
+
+    guard = WorkspaceGuard(tmp_path)
+    ranked = rank_files(
+        "Fix authentication timeout handling",
+        discover_workspace_files(guard),
+    )
+    top_two = [item.file.relative_path for item in ranked[:2]]
+    assert top_two == ["src/services/session.py", "src/net/request.py"]
+    assert any("task term in content" in reason for reason in ranked[0].reasons)
+
+
+def test_ranking_boosts_changed_files(tmp_path: Path) -> None:
+    a = tmp_path / "a.py"
+    b = tmp_path / "b.py"
+    a.write_text("x = 1\n", encoding="utf-8")
+    b.write_text("x = 1\n", encoding="utf-8")
+    files = [
+        WorkspaceFile(a, "a.py", a.stat().st_size),
+        WorkspaceFile(b, "b.py", b.stat().st_size),
+    ]
+    ranked = rank_files("tidy things", files, changed_paths={"b.py"})
+    assert ranked[0].file.relative_path == "b.py"
+    assert "changed in working tree" in ranked[0].reasons
+
+
+def test_task_content_terms_split_identifiers_and_drop_filler() -> None:
+    from ensemble.ranking import task_content_terms
+
+    assert task_content_terms("Fix the AuthTimeout in session_store") == {
+        "auth",
+        "timeout",
+        "session",
+        "store",
+    }

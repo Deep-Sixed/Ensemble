@@ -46,8 +46,8 @@ def build_context_packet(
         guard,
         max_file_bytes=max_file_bytes,
     )
-    ranked = rank_files(task, discovered)[:max_files]
     git_context = collect_git_context(guard.root)
+    ranked = rank_files(task, discovered, changed_paths=git_context.changed_paths)[:max_files]
 
     rendered_parts: list[str] = []
     selected_files: list[dict[str, Any]] = []

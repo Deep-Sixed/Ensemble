@@ -15,6 +15,18 @@ class GitContext:
     def to_dict(self) -> dict:
         return asdict(self)
 
+    @property
+    def changed_paths(self) -> set[str]:
+        """Workspace-relative paths from `git status --short` (rename targets included)."""
+        paths: set[str] = set()
+        for line in self.status:
+            entry = line[3:].strip()
+            if " -> " in entry:
+                entry = entry.split(" -> ", 1)[1]
+            if entry:
+                paths.add(entry.strip('"'))
+        return paths
+
     def render(self) -> str:
         parts: list[str] = []
         if self.branch:
