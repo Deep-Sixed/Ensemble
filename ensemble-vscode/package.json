@@ -1,7 +1,7 @@
 {
   "name": "ensemble",
   "displayName": "Ensemble",
-  "description": "Ensemble repository intelligence and code-context extension.",
+  "description": "Build Ensemble code-context packets for a task and hand them to any agent.",
   "version": "0.2.0",
   "publisher": "ensemble",
   "license": "UNLICENSED",
@@ -11,15 +11,6 @@
   "categories": [
     "AI",
     "Other"
-  ],
-  "activationEvents": [
-    "onView:ensemble.chat",
-    "onCommand:ensemble.checkHealth",
-    "onCommand:ensemble.askSelection",
-    "onCommand:ensemble.askCurrentFile",
-    "onCommand:ensemble.reviewWorkspace",
-    "onCommand:ensemble.applyPatch",
-    "onCommand:ensemble.openSettings"
   ],
   "main": "./dist/extension.js",
   "scripts": {
@@ -42,108 +33,29 @@
     "configuration": {
       "title": "Ensemble",
       "properties": {
-        "ensemble.baseUrl": {
-          "type": "string",
-          "default": "http://127.0.0.1:8090/v1",
-          "description": "OpenAI-compatible downstream endpoint used by diagnostic commands."
-        },
-        "ensemble.model": {
-          "type": "string",
-          "default": "auto",
-          "description": "Model identifier used by optional downstream diagnostic requests."
-        },
-        "ensemble.apiKey": {
+        "ensemble.cliPath": {
           "type": "string",
           "default": "ensemble",
-          "description": "API key for the configured downstream endpoint, if required."
+          "description": "Path to the `ensemble` CLI."
         },
-        "ensemble.maxTokens": {
+        "ensemble.tokenBudget": {
           "type": "number",
-          "default": 1024,
-          "description": "Maximum tokens for diagnostic chat completions."
+          "default": 12000,
+          "minimum": 1,
+          "description": "Maximum estimated tokens in the context packet."
         },
-        "ensemble.temperature": {
-          "type": "number",
-          "default": 0.2,
-          "description": "Sampling temperature for diagnostic chat completions."
+        "ensemble.semantic": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enrich context with LSP symbols, definitions and references (slower; requires language servers)."
         }
       }
-    },
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "ensemble",
-          "title": "Ensemble",
-          "icon": "$(server-process)"
-        }
-      ]
-    },
-    "views": {
-      "ensemble": [
-        {
-          "id": "ensemble.chat",
-          "name": "Chat"
-        }
-      ]
     },
     "commands": [
       {
-        "command": "ensemble.checkHealth",
-        "title": "Ensemble: Check Health"
-      },
-      {
-        "command": "ensemble.askSelection",
-        "title": "Ensemble: Ask About Selection"
-      },
-      {
-        "command": "ensemble.askCurrentFile",
-        "title": "Ensemble: Ask About Current File"
-      },
-      {
-        "command": "ensemble.reviewWorkspace",
-        "title": "Ensemble: Review Workspace"
-      },
-      {
-        "command": "ensemble.applyPatch",
-        "title": "Ensemble: Apply Patch"
-      },
-      {
-        "command": "ensemble.openSettings",
-        "title": "Ensemble: Open Settings"
+        "command": "ensemble.buildContext",
+        "title": "Ensemble: Build Context for Task"
       }
-    ],
-    "menus": {
-      "editor/context": [
-        {
-          "command": "ensemble.askSelection",
-          "when": "editorHasSelection",
-          "group": "ensemble@1"
-        },
-        {
-          "command": "ensemble.askCurrentFile",
-          "group": "ensemble@2"
-        }
-      ],
-      "commandPalette": [
-        {
-          "command": "ensemble.checkHealth"
-        },
-        {
-          "command": "ensemble.askSelection"
-        },
-        {
-          "command": "ensemble.askCurrentFile"
-        },
-        {
-          "command": "ensemble.reviewWorkspace"
-        },
-        {
-          "command": "ensemble.applyPatch"
-        },
-        {
-          "command": "ensemble.openSettings"
-        }
-      ]
-    }
+    ]
   }
 }

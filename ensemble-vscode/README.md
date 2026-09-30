@@ -1,31 +1,23 @@
 # Ensemble VS Code Extension
 
-Ensemble sidebar and editor commands for the local llama.cpp server.
+Thin handoff from the editor to the `ensemble` CLI. It does not call models.
 
-Default endpoint (multi-model router):
+**Ensemble: Build Context for Task** asks for a task, runs
+`ensemble context` against the active workspace folder, then lets you:
 
-```text
-http://127.0.0.1:8090/v1
-```
+- **Copy Context**: copy the rendered context to the clipboard for any agent
+  (Pi, Claude Code, Codex, Cursor, ...);
+- **Open Packet**: open the full structured JSON packet in an editor.
 
-Single-model Docker stack (`docker-compose.yml`) uses port 8888 instead.
+## Settings
 
-Default model:
+| Setting | Default | Purpose |
+|---------|---------|---------|
+| `ensemble.cliPath` | `ensemble` | Path to the Ensemble CLI |
+| `ensemble.tokenBudget` | `12000` | Maximum estimated tokens in the packet |
+| `ensemble.semantic` | `true` | LSP enrichment; set `false` for `--no-semantic` |
 
-```text
-qwen2.5-coder-7b-instruct-q4_k_m
-```
-
-## Roadmap
-
-```text
-0.1.0  Sidebar + ask commands
-0.1.1  Status bar health indicator
-0.2.0  Patch proposal endpoint
-0.3.0  Diff preview
-0.4.0  Apply patch with checkpoint
-0.5.0  Self-hosting reload/test loop
-```
+The CLI runs with `ENSEMBLE_WORKSPACE` set to the workspace folder.
 
 Build and package:
 
@@ -40,6 +32,6 @@ mise exec -- npx @vscode/vsce package
 Install:
 
 ```bash
-code --install-extension ensemble-0.1.1.vsix
-cursor --install-extension ensemble-0.1.1.vsix
+code --install-extension ensemble-0.2.0.vsix
+cursor --install-extension ensemble-0.2.0.vsix
 ```
