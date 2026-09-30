@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-05-12T03:55:14-04:00",
+  "os": "Ubuntu 26.04 LTS",
+  "kernel": "7.0.0-15-generic",
+  "cpu": "Intel(R) Core(TM) i7-4930K CPU @ 3.40GHz",
+  "cpu_physical_cores": 6,
+  "cpu_threads_per_core": 2,
+  "cpu_threads_total": 12,
+  "cpu_max_mhz": "3900.0000",
+  "ram_gb": 22,
+  "ram_available_gb": 18,
+  "swap_gb": 7,
+  "gpu": "NVIDIA GeForce RTX 3060 Ti",
+  "vram_mb": 8192,
+  "vram_free_mb": 7703,
+  "driver_version": "595.58.03",
+  "cuda_version": "13.2"
+}

@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-05-12T02:42:25.807994",
+  "backend": "gguf-parser v0.24.0",
+  "model": "qwen3.6-35b-a3b-ud-q4_k_xl.gguf",
+  "model_path": "/home/jarvis/projects/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf",
+  "hardware_profile": "/home/jarvis/projects/ensemble/skills/analyze-local-llm/hardware-report/linux-hardware-20260512-020307.json",
+  "model_info": {
+    "architecture": "qwen35moe",
+    "quantization": "Q3_K_M",
+    "n_layers": 40,
+    "n_kv_heads": 2,
+    "head_dim": 256,
+    "max_context": 262144,
+    "weights_mb": 15890,
+    "file_size_mb": 21325
+  },
+  "kv_cache_mb": {
+    "4k": 22031,
+    "8k": 328,
+    "32k": 2296
+  },
+  "total_vram_needed_mb": {
+    "4k_ctx": 22359,
+    "8k_ctx": 22687,
+    "32k_ctx": 24655
+  },
+  "hardware": {
+    "vram_mb": 8192,
+    "vram_free_mb": 7703,
+    "ram_gb": 22,
+    "ram_available_gb": 14
+  },
+  "fit": {
+    "verdict": "exceeds_hardware",
+    "verdict_label": "Exceeds both VRAM and safe RAM budget \u2014 not recommended",
+    "recommended_ngl": 19,
+    "vram_headroom_mb": -14656,
+    "ram_spillover_gb": 14.31
+  },
+  "launch_flags": "-ngl 19 --flash-attn on --jinja --n-cpu-moe 999"
+}

@@ -37,6 +37,45 @@ MoE models can outperform dense models at the same VRAM budget because active pa
 
 ---
 
+## Hardware Collection
+
+Before recommending local LLM models, run:
+
+```bash
+./collect-linux-hardware.sh
+```
+
+The script writes a timestamped report to:
+
+```
+./hardware-report/
+```
+
+Use that report as the input source for CPU, RAM, GPU, VRAM, storage, OS, and driver/runtime recommendations.
+
+### Required Tools
+
+The script auto-installs missing tools when `sudo` is available non-interactively. On a fresh install or restricted shell, install manually:
+
+```bash
+sudo apt-get install inxi hwinfo lshw usbutils pciutils
+```
+
+| Tool | Package | Provides | Required |
+|---|---|---|---|
+| `lscpu` | `util-linux` (pre-installed) | CPU model, cores, threads, cache, flags | yes |
+| `free` | `procps` (pre-installed) | RAM and swap totals | yes |
+| `lsblk` | `util-linux` (pre-installed) | Storage devices, sizes, mount points | yes |
+| `df` | `coreutils` (pre-installed) | Filesystem usage | yes |
+| `lspci` | `pciutils` | GPU, audio, network PCI devices | yes |
+| `lsusb` | `usbutils` | USB peripherals | yes |
+| `nvidia-smi` | NVIDIA driver (proprietary) | GPU name, VRAM, driver version, CUDA version | yes (NVIDIA only) |
+| `lshw` | `lshw` | Full hardware tree including motherboard | recommended |
+| `inxi` | `inxi` | Compact full-system summary with GPU arch, display, kernel | recommended |
+| `hwinfo` | `hwinfo` | Low-level hardware enumeration | optional |
+
+---
+
 ## Inputs
 
 - GPU model

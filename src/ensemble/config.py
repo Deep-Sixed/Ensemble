@@ -47,7 +47,7 @@ def load_config(
         load_dotenv()
 
     workspace = Path(
-        _env("ENSEMBLE_WORKSPACE") or "/home/jarvis/jarvis/talent-beacon"
+        _env("ENSEMBLE_WORKSPACE") or "/home/jarvis/projects/nexus"
     ).expanduser()
 
     if profile_override is not None:

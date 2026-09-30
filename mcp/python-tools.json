@@ -7,7 +7,7 @@
         "ensemble.mcp_python_tools"
       ],
       "env": {
-        "ENSEMBLE_WORKSPACE": "/home/jarvis/jarvis/talent-beacon"
+        "ENSEMBLE_WORKSPACE": "/home/jarvis/projects/nexus"
       },
       "enabled": false,
       "notes": "Placeholder for a future Ensemble Python MCP tool server."

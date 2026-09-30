@@ -1,0 +1,442 @@
+Linux Hardware Report
+Generated: 2026-05-12T03:50:32-04:00
+
+===== OS =====
+PRETTY_NAME="Ubuntu 26.04 LTS"
+NAME="Ubuntu"
+VERSION_ID="26.04"
+VERSION="26.04 (Resolute Raccoon)"
+VERSION_CODENAME=resolute
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=resolute
+LOGO=ubuntu-logo
+Linux jarvis 7.0.0-15-generic #15-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 22 16:06:43 UTC 2026 x86_64 GNU/Linux
+
+===== CPU =====
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           46 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  12
+On-line CPU(s) list:                     0-11
+Vendor ID:                               GenuineIntel
+Model name:                              Intel(R) Core(TM) i7-4930K CPU @ 3.40GHz
+CPU family:                              6
+Model:                                   62
+Thread(s) per core:                      2
+Core(s) per socket:                      6
+Socket(s):                               1
+Stepping:                                4
+CPU(s) scaling MHz:                      87%
+CPU max MHz:                             3900.0000
+CPU min MHz:                             1200.0000
+BogoMIPS:                                6804.35
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm cpuid_fault epb pti ssbd ibrs ibpb stibp tpr_shadow flexpriority ept vpid fsgsbase smep erms xsaveopt dtherm ida arat pln pts vnmi md_clear flush_l1d
+Virtualization:                          VT-x
+L1d cache:                               192 KiB (6 instances)
+L1i cache:                               192 KiB (6 instances)
+L2 cache:                                1.5 MiB (6 instances)
+L3 cache:                                12 MiB (1 instance)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-11
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             KVM: Mitigation: Split huge pages
+Vulnerability L1tf:                      Mitigation; PTE Inversion; VMX conditional cache flushes, SMT vulnerable
+Vulnerability Mds:                       Mitigation; Clear CPU buffers; SMT vulnerable
+Vulnerability Meltdown:                  Mitigation; PTI
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Old microcode:             Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Not affected
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP conditional; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Not affected
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+
+===== RAM =====
+               total        used        free      shared  buff/cache   available
+Mem:            22Gi       4.4Gi        15Gi       160Mi       3.8Gi        18Gi
+Swap:          8.0Gi          0B       8.0Gi
+MemTotal:       24009060 kB
+MemFree:        15933736 kB
+MemAvailable:   19368388 kB
+Buffers:          221056 kB
+Cached:          3418668 kB
+SwapCached:            0 kB
+Active:          5472208 kB
+Inactive:        1377956 kB
+Active(anon):    3374312 kB
+Inactive(anon):        0 kB
+Active(file):    2097896 kB
+Inactive(file):  1377956 kB
+Unevictable:         112 kB
+Mlocked:             112 kB
+SwapTotal:       8388604 kB
+SwapFree:        8388604 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:              2220 kB
+Writeback:             0 kB
+AnonPages:       3211796 kB
+Mapped:          1346676 kB
+Shmem:            164280 kB
+KReclaimable:     343880 kB
+Slab:             578532 kB
+SReclaimable:     343880 kB
+SUnreclaim:       234652 kB
+KernelStack:       23464 kB
+PageTables:        64492 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    20393132 kB
+Committed_AS:   23445060 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      107692 kB
+VmallocChunk:          0 kB
+Percpu:            11040 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:    311296 kB
+FilePmdMapped:      2048 kB
+CmaTotal:              0 kB
+CmaFree:         3266560 kB
+Unaccepted:            0 kB
+Balloon:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      435340 kB
+DirectMap2M:     7884800 kB
+DirectMap1G:    18874368 kB
+
+===== Storage =====
+NAME     SIZE TYPE FSTYPE   MOUNTPOINTS                         MODEL
+loop0      4K loop squashfs /snap/bare/5                        
+loop1  379.9M loop squashfs /snap/code/238                      
+loop2     74M loop squashfs /snap/core22/2411                   
+loop3   63.8M loop squashfs /snap/core20/2769                   
+loop4   66.8M loop squashfs /snap/core24/1587                   
+loop5   19.6M loop squashfs /snap/desktop-security-center/150   
+loop6  273.7M loop squashfs /snap/firefox/8107                  
+loop7     20M loop squashfs /snap/desktop-security-center/151   
+loop8  246.6M loop squashfs /snap/firefox/8274                  
+loop9   16.5M loop squashfs /snap/firmware-updater/226          
+loop10  32.2M loop squashfs /snap/glab/5808                     
+loop11 606.1M loop squashfs /snap/gnome-46-2404/153             
+loop12  91.7M loop squashfs /snap/gtk-common-themes/1535        
+loop13   395M loop squashfs /snap/mesa-2404/1165                
+loop14  78.7M loop squashfs /snap/powershell/351                
+loop15  18.8M loop squashfs /snap/prompting-client/204          
+loop16  18.8M loop squashfs /snap/prompting-client/222          
+loop17  15.7M loop squashfs /snap/snap-store/1367               
+loop18   580K loop squashfs /snap/snapd-desktop-integration/361 
+loop19  49.3M loop squashfs /snap/snapd/26865                   
+sda    476.9G disk                                              SAMSUNG MZ7TD512HAGM-000L1
+├─sda1     1G part vfat     /boot/efi                           
+└─sda2 475.9G part ext4     /                                   
+sdb    476.9G disk                                              Samsung SSD 840 PRO Series
+├─sdb1    50M part ntfs                                         
+├─sdb2 476.4G part ntfs                                         
+└─sdb3   508M part ntfs                                         
+sr0      4.1G rom  udf                                          ASUS BW-16D1HT
+Filesystem      Size  Used Avail Use% Mounted on
+tmpfs           4.6G  4.6M  4.6G   1% /run
+/dev/sda2       468G   94G  351G  22% /
+tmpfs            12G  115M   12G   1% /dev/shm
+efivarfs        128K  116K  7.5K  94% /sys/firmware/efi/efivars
+none            1.0M     0  1.0M   0% /run/credentials/systemd-journald.service
+none            1.0M     0  1.0M   0% /run/credentials/systemd-resolved.service
+/dev/sda1       1.1G  6.4M  1.1G   1% /boot/efi
+tmpfs            12G  260K   12G   1% /tmp
+tmpfs           2.3G   88K  2.3G   1% /run/user/60578
+tmpfs           2.3G  100K  2.3G   1% /run/user/1000
+
+===== PCI / GPU / Audio / Network =====
+00:00.0 Host bridge: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 DMI2 (rev 04)
+00:01.0 PCI bridge: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 PCI Express Root Port 1a (rev 04)
+00:02.0 PCI bridge: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 PCI Express Root Port 2a (rev 04)
+00:03.0 PCI bridge: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 PCI Express Root Port 3a (rev 04)
+00:05.0 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 VTd/Memory Map/Misc (rev 04)
+00:05.2 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 IIO RAS (rev 04)
+00:05.4 PIC: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 IOAPIC (rev 04)
+00:11.0 PCI bridge: Intel Corporation C600/X79 series chipset PCI Express Virtual Root Port (rev 06)
+00:16.0 Communication controller: Intel Corporation C600/X79 series chipset MEI Controller #1 (rev 05)
+00:19.0 Ethernet controller: Intel Corporation 82579V Gigabit Network Connection (rev 06)
+00:1a.0 USB controller: Intel Corporation C600/X79 series chipset USB2 Enhanced Host Controller #2 (rev 06)
+00:1b.0 Audio device: Intel Corporation C600/X79 series chipset High Definition Audio Controller (rev 06)
+00:1c.0 PCI bridge: Intel Corporation C600/X79 series chipset PCI Express Root Port 1 (rev b6)
+00:1c.1 PCI bridge: Intel Corporation C600/X79 series chipset PCI Express Root Port 2 (rev b6)
+00:1c.2 PCI bridge: Intel Corporation C600/X79 series chipset PCI Express Root Port 3 (rev b6)
+00:1c.3 PCI bridge: Intel Corporation C600/X79 series chipset PCI Express Root Port 4 (rev b6)
+00:1c.4 PCI bridge: Intel Corporation C600/X79 series chipset PCI Express Root Port 5 (rev b6)
+00:1c.5 PCI bridge: Intel Corporation C600/X79 series chipset PCI Express Root Port 6 (rev b6)
+00:1c.7 PCI bridge: Intel Corporation C600/X79 series chipset PCI Express Root Port 8 (rev b6)
+00:1d.0 USB controller: Intel Corporation C600/X79 series chipset USB2 Enhanced Host Controller #1 (rev 06)
+00:1e.0 PCI bridge: Intel Corporation 82801 PCI Bridge (rev a6)
+00:1f.0 ISA bridge: Intel Corporation C600/X79 series chipset LPC Controller (rev 06)
+00:1f.2 SATA controller: Intel Corporation C600/X79 series chipset 6-Port SATA AHCI Controller (rev 06)
+00:1f.3 SMBus: Intel Corporation C600/X79 series chipset SMBus Host Controller (rev 06)
+01:00.0 VGA compatible controller: NVIDIA Corporation GA104 [GeForce RTX 3060 Ti Lite Hash Rate] (rev a1)
+01:00.1 Audio device: NVIDIA Corporation GA104 High Definition Audio Controller (rev a1)
+06:00.0 USB controller: ASMedia Technology Inc. ASM1042A USB 3.0 Host Controller
+07:00.0 USB controller: ASMedia Technology Inc. ASM1042A USB 3.0 Host Controller
+08:00.0 USB controller: ASMedia Technology Inc. ASM1042A USB 3.0 Host Controller
+09:00.0 USB controller: ASMedia Technology Inc. ASM1042A USB 3.0 Host Controller
+0a:00.0 SATA controller: ASMedia Technology Inc. ASM1061/ASM1062 Serial ATA Controller (rev 01)
+0b:00.0 SATA controller: ASMedia Technology Inc. ASM1061/ASM1062 Serial ATA Controller (rev 01)
+ff:08.0 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 QPI Link 0 (rev 04)
+ff:09.0 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 QPI Link 1 (rev 04)
+ff:0a.0 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Power Control Unit 0 (rev 04)
+ff:0a.1 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Power Control Unit 1 (rev 04)
+ff:0a.2 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Power Control Unit 2 (rev 04)
+ff:0a.3 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Power Control Unit 3 (rev 04)
+ff:0b.0 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 UBOX Registers (rev 04)
+ff:0b.3 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 UBOX Registers (rev 04)
+ff:0c.0 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Unicast Registers (rev 04)
+ff:0c.1 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Unicast Registers (rev 04)
+ff:0c.2 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Unicast Registers (rev 04)
+ff:0d.0 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Unicast Registers (rev 04)
+ff:0d.1 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Unicast Registers (rev 04)
+ff:0d.2 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Unicast Registers (rev 04)
+ff:0e.0 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Home Agent 0 (rev 04)
+ff:0e.1 Performance counters: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Home Agent 0 (rev 04)
+ff:0f.0 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 0 Target Address/Thermal Registers (rev 04)
+ff:0f.1 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 0 RAS Registers (rev 04)
+ff:0f.2 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 0 Channel Target Address Decoder Registers (rev 04)
+ff:0f.3 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 0 Channel Target Address Decoder Registers (rev 04)
+ff:0f.4 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 0 Channel Target Address Decoder Registers (rev 04)
+ff:0f.5 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 0 Channel Target Address Decoder Registers (rev 04)
+ff:10.0 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 Thermal Control 0 (rev 04)
+ff:10.1 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 Thermal Control 1 (rev 04)
+ff:10.2 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 ERROR Registers 0 (rev 04)
+ff:10.3 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 ERROR Registers 1 (rev 04)
+ff:10.4 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 Thermal Control 2 (rev 04)
+ff:10.5 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 Thermal Control 3 (rev 04)
+ff:10.6 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 ERROR Registers 2 (rev 04)
+ff:10.7 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 ERROR Registers 3 (rev 04)
+ff:13.0 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 R2PCIe (rev 04)
+ff:13.1 Performance counters: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 R2PCIe (rev 04)
+ff:13.4 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 QPI Ring Registers (rev 04)
+ff:13.5 Performance counters: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 QPI Ring Performance Ring Monitoring (rev 04)
+ff:16.0 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 System Address Decoder (rev 04)
+ff:16.1 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Broadcast Registers (rev 04)
+ff:16.2 System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Broadcast Registers (rev 04)
+
+===== USB =====
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 002 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 002 Device 002: ID 8087:0024 Intel Corp. Integrated Rate Matching Hub
+Bus 002 Device 003: ID 0b05:179c ASUSTek Computer, Inc. Bluetooth Adapter
+Bus 003 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 004 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 004 Device 002: ID 8087:0024 Intel Corp. Integrated Rate Matching Hub
+Bus 004 Device 003: ID 1a2c:95f6 China Resource Semico Co., Ltd USB Gaming Keyboard 
+Bus 005 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 006 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 007 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 008 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 009 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 009 Device 002: ID 413c:301a Dell Computer Corp. Dell MS116 Optical Mouse
+Bus 010 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+
+===== inxi summary =====
+12System:
+  12Kernel 7.0.0-15-generic 12arch x86_64 12bits 64 12compiler gcc 12v 15.2.0
+  12Desktop Xfce 12v 4.20.1 12Distro Ubuntu 26.04 (Resolute Raccoon)
+12Machine:
+  12Type Desktop 12Mobo ASUSTeK 12model RAMPAGE IV EXTREME 12v Rev 1.xx 12serial <superuser required>
+    12Firmware UEFI 12vendor American Megatrends 12v 4901 12date 05/14/2014
+12CPU:
+  12Info 6-core 12model Intel Core i7-4930K 12bits 64 12type MT MCP 12arch Ivy Bridge 12rev 4 12cache 12L1 384 KiB
+    12L2 1.5 MiB 12L3 12 MiB
+  12Speed (MHz) 12avg 1402 12min/max 1200/3900 12cores 121 1402 122 1402 123 1402 124 1402 125 1402 126 1402 127 1402
+    128 1402 129 1402 1210 1402 1211 1402 1212 1402 12bogomips 81652
+  12Flags-basic avx ht lm nx pae sse sse2 sse3 sse4_1 sse4_2 ssse3 vmx
+12Graphics:
+  12Device-1 NVIDIA GA104 [GeForce RTX 3060 Ti Lite Hash Rate] 12vendor ASUSTeK 12driver nvidia
+    12v 595.58.03 12arch Ampere 12bus-ID 01:00.0
+  12Display x11 12server X.Org 12v 21.1.22 12with Xwayland 12v 24.1.10 12driver 12dri swrast
+    12gpu nv_platform,nvidia,nvidia-nvswitch 12resolution 1920x1080~50Hz
+  12API EGL 12v 1.5 12drivers nvidia,swrast 12platforms 12active x11,surfaceless,device
+    12inactive gbm,wayland,device-1
+  12API OpenGL 12v 4.6.0 12compat-v 4.5 12vendor mesa 12v 26.0.3-1ubuntu1 12glx-v 1.4 12direct-render yes
+    12renderer llvmpipe (LLVM 21.1.8 256 bits)
+  12Info 12Tools 12api eglinfo,glxinfo 12de xfce4-display-settings 12gpu nvidia-settings,nvidia-smi
+    12x11 xdriinfo, xdpyinfo, xprop, xrandr
+12Audio:
+  12Device-1 Intel C600/X79 series High Definition Audio 12vendor ASUSTeK 12driver snd_hda_intel 12v kernel
+    12bus-ID 00:1b.0
+  12Device-2 NVIDIA GA104 High Definition Audio 12vendor ASUSTeK 12driver snd_hda_intel 12v kernel
+    12bus-ID 01:00.1
+  12API ALSA 12v k7.0.0-15-generic 12status kernel-api
+  12Server-1 PipeWire 12v 1.6.2 12status active
+12Network:
+  12Device-1 Intel 82579V Gigabit Network 12vendor ASUSTeK P8P67 Deluxe 12driver e1000e 12v kernel
+    12port f040 12bus-ID 00:19.0
+  12IF eno1 12state up 12speed 1000 Mbps 12duplex full 12mac <filter>
+  12IF-ID-1 br-7660fbc225c5 12state down 12mac <filter>
+  12IF-ID-2 br-a5a4ff38aa85 12state down 12mac <filter>
+  12IF-ID-3 docker0 12state down 12mac <filter>
+12Bluetooth:
+  12Device-1 ASUSTek Bluetooth Adapter 12driver btusb 12v 0.8 12type USB 12bus-ID 2-1.6:3
+  12Report hciconfig 12ID hci0 12rfk-id 0 12state up 12address <filter> 12bt-v 3.0 12lmp-v 5
+12Drives:
+  12Local Storage 12total 953.88 GiB 12used 93.24 GiB (9.8%)
+  12ID-1 /dev/sda 12vendor Samsung 12model MZ7TD512HAGM-000L1 12size 476.94 GiB
+  12ID-2 /dev/sdb 12vendor Samsung 12model SSD 840 PRO Series 12size 476.94 GiB
+12Partition:
+  12ID-1 / 12size 467.35 GiB 12used 93.23 GiB (19.9%) 12fs ext4 12dev /dev/sda2
+  12ID-2 /boot/efi 12size 1.05 GiB 12used 6.3 MiB (0.6%) 12fs vfat 12dev /dev/sda1
+12Swap:
+  12ID-1 swap-1 12type file 12size 8 GiB 12used 0 KiB (0.0%) 12file /swap.img
+12Sensors:
+  12System Temperatures 12cpu 26.0 C 12mobo N/A
+  12Fan Speeds (rpm) N/A
+12Info:
+  12Memory 12total 24 GiB 12available 22.9 GiB 12used 4.49 GiB (19.6%)
+  12Processes 389 12Uptime 27m 12Init systemd
+  12Packages 2500 12Compilers 12gcc 15.2.0 12Client shell wrapper 12v 5.3.9-release 12inxi 3.3.40
+
+===== lshw short =====
+H/W path             Device      Class          Description
+===========================================================
+                                 system         Computer
+/0                               bus            Motherboard
+/0/0                             memory         24GiB System memory
+/0/1                             processor      Intel(R) Core(TM) i7-4930K CPU @ 3.40GHz
+/0/100                           bridge         Xeon E7 v2/Xeon E5 v2/Core i7 DMI2
+/0/100/1                         bridge         Xeon E7 v2/Xeon E5 v2/Core i7 PCI Express Root Port 1a
+/0/100/2                         bridge         Xeon E7 v2/Xeon E5 v2/Core i7 PCI Express Root Port 2a
+/0/100/2/0           /dev/fb0    display        GA104 [GeForce RTX 3060 Ti Lite Hash Rate]
+/0/100/2/0.1         card1       multimedia     GA104 High Definition Audio Controller
+/0/100/2/0.1/0       input10     input          HDA NVidia HDMI/DP,pcm=3
+/0/100/2/0.1/1       input11     input          HDA NVidia HDMI/DP,pcm=7
+/0/100/2/0.1/2       input12     input          HDA NVidia HDMI/DP,pcm=8
+/0/100/2/0.1/3       input13     input          HDA NVidia HDMI/DP,pcm=9
+/0/100/3                         bridge         Xeon E7 v2/Xeon E5 v2/Core i7 PCI Express Root Port 3a
+/0/100/5                         generic        Xeon E7 v2/Xeon E5 v2/Core i7 VTd/Memory Map/Misc
+/0/100/5.2                       generic        Xeon E7 v2/Xeon E5 v2/Core i7 IIO RAS
+/0/100/5.4                       generic        Xeon E7 v2/Xeon E5 v2/Core i7 IOAPIC
+/0/100/11                        bridge         C600/X79 series chipset PCI Express Virtual Root Port
+/0/100/16                        communication  C600/X79 series chipset MEI Controller #1
+/0/100/19            eno1        network        82579V Gigabit Network Connection
+/0/100/1a                        bus            C600/X79 series chipset USB2 Enhanced Host Controller #2
+/0/100/1b            card0       multimedia     C600/X79 series chipset High Definition Audio Controller
+/0/100/1b/0          input14     input          HDA Intel PCH Rear Mic
+/0/100/1b/1          input15     input          HDA Intel PCH Front Mic
+/0/100/1b/2          input16     input          HDA Intel PCH Line
+/0/100/1b/3          input17     input          HDA Intel PCH Line Out Front
+/0/100/1b/4          input18     input          HDA Intel PCH Line Out Surround
+/0/100/1b/5          input19     input          HDA Intel PCH Line Out CLFE
+/0/100/1b/6          input20     input          HDA Intel PCH Front Headphone
+/0/100/1c                        bridge         C600/X79 series chipset PCI Express Root Port 1
+/0/100/1c.1                      bridge         C600/X79 series chipset PCI Express Root Port 2
+/0/100/1c.1/0                    bus            ASM1042A USB 3.0 Host Controller
+/0/100/1c.2                      bridge         C600/X79 series chipset PCI Express Root Port 3
+/0/100/1c.2/0                    bus            ASM1042A USB 3.0 Host Controller
+/0/100/1c.3                      bridge         C600/X79 series chipset PCI Express Root Port 4
+/0/100/1c.3/0                    bus            ASM1042A USB 3.0 Host Controller
+/0/100/1c.4                      bridge         C600/X79 series chipset PCI Express Root Port 5
+/0/100/1c.4/0                    bus            ASM1042A USB 3.0 Host Controller
+/0/100/1c.5                      bridge         C600/X79 series chipset PCI Express Root Port 6
+/0/100/1c.5/0                    storage        ASM1061/ASM1062 Serial ATA Controller
+/0/100/1c.7                      bridge         C600/X79 series chipset PCI Express Root Port 8
+/0/100/1c.7/0                    storage        ASM1061/ASM1062 Serial ATA Controller
+/0/100/1d                        bus            C600/X79 series chipset USB2 Enhanced Host Controller #1
+/0/100/1e                        bridge         82801 PCI Bridge
+/0/100/1f                        bridge         C600/X79 series chipset LPC Controller
+/0/100/1f/0                      system         PnP device PNP0b00
+/0/100/1f.2          scsi5       storage        C600/X79 series chipset 6-Port SATA AHCI Controller
+/0/100/1f.2/0.0.0    /dev/cdrom  disk           BW-16D1HT
+/0/100/1f.2/0.0.0/0  /dev/cdrom  disk           
+/0/100/1f.3                      bus            C600/X79 series chipset SMBus Host Controller
+/0/8                             generic        Xeon E7 v2/Xeon E5 v2/Core i7 QPI Link 0
+/0/9                             generic        Xeon E7 v2/Xeon E5 v2/Core i7 QPI Link 1
+/0/a                             generic        Xeon E7 v2/Xeon E5 v2/Core i7 Power Control Unit 0
+/0/a.1                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Power Control Unit 1
+/0/a.2                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Power Control Unit 2
+/0/a.3                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Power Control Unit 3
+/0/b                             generic        Xeon E7 v2/Xeon E5 v2/Core i7 UBOX Registers
+/0/b.3                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 UBOX Registers
+/0/c                             generic        Xeon E7 v2/Xeon E5 v2/Core i7 Unicast Registers
+/0/c.1                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Unicast Registers
+/0/c.2                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Unicast Registers
+/0/d                             generic        Xeon E7 v2/Xeon E5 v2/Core i7 Unicast Registers
+/0/d.1                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Unicast Registers
+/0/d.2                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Unicast Registers
+/0/e                             generic        Xeon E7 v2/Xeon E5 v2/Core i7 Home Agent 0
+/0/e.1                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Home Agent 0
+/0/f                             generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 0 Target Address/Thermal Registers
+/0/f.1                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 0 RAS Registers
+/0/f.2                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 0 Channel Target Address Decoder Registers
+/0/f.3                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 0 Channel Target Address Decoder Registers
+/0/f.4                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 0 Channel Target Address Decoder Registers
+/0/f.5                           generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 0 Channel Target Address Decoder Registers
+/0/10                            generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 Thermal Control 0
+/0/10.1                          generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 Thermal Control 1
+/0/10.2                          generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 ERROR Registers 0
+/0/10.3                          generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 ERROR Registers 1
+/0/10.4                          generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 Thermal Control 2
+/0/10.5                          generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 Thermal Control 3
+/0/10.6                          generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 ERROR Registers 2
+/0/10.7                          generic        Xeon E7 v2/Xeon E5 v2/Core i7 Integrated Memory Controller 1 Channel 0-3 ERROR Registers 3
+/0/13                            generic        Xeon E7 v2/Xeon E5 v2/Core i7 R2PCIe
+/0/13.1                          generic        Xeon E7 v2/Xeon E5 v2/Core i7 R2PCIe
+/0/13.4                          generic        Xeon E7 v2/Xeon E5 v2/Core i7 QPI Ring Registers
+/0/13.5                          generic        Xeon E7 v2/Xeon E5 v2/Core i7 QPI Ring Performance Ring Monitoring
+/0/16                            generic        Xeon E7 v2/Xeon E5 v2/Core i7 System Address Decoder
+/0/16.1                          generic        Xeon E7 v2/Xeon E5 v2/Core i7 Broadcast Registers
+/0/16.2                          generic        Xeon E7 v2/Xeon E5 v2/Core i7 Broadcast Registers
+/1                   input0      input          Power Button
+/2                   input1      input          Power Button
+/3                   input2      input          PixArt Dell MS116 USB Optical Mouse
+/4                   input3      input          SEMICO   USB Gaming Keyboard
+/5                   input4      input          SEMICO   USB Gaming Keyboard  Consumer Control
+/6                   input5      input          SEMICO   USB Gaming Keyboard  System Control
+/7                   input7      input          SEMICO   USB Gaming Keyboard  Keyboard
+/8                   input9      input          Eee PC WMI hotkeys
+
+===== hwinfo short =====
+hwinfo not installed
+
+===== NVIDIA =====
+Tue May 12 03:50:36 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.58.03              Driver Version: 595.58.03      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3060 Ti     Off |   00000000:01:00.0 Off |                  N/A |
+|  0%   36C    P8              9W /  200W |     138MiB /   8192MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A            2432      G   /usr/bin/gnome-shell                     57MiB |
+|    0   N/A  N/A            3875      G   /usr/bin/Xwayland                         3MiB |
+|    0   N/A  N/A            8320    C+G   /usr/bin/x-terminal-emulator             31MiB |
++-----------------------------------------------------------------------------------------+

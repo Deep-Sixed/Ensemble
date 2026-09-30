@@ -4,7 +4,7 @@
       "command": "codebase-memory-mcp",
       "args": [
         "--workspace",
-        "/home/jarvis/jarvis/talent-beacon"
+        "/home/jarvis/projects/nexus"
       ],
       "env": {},
       "enabled": false,

@@ -1,0 +1,25 @@
+Model Recommendations
+Generated: 2026-05-12T03:50:37-04:00
+Hardware: NVIDIA GeForce RTX 3060 Ti — 8192 MiB VRAM — 22GB RAM
+
+===== Recommended Models =====
+COMFORTABLE:
+  Qwen3 4B Instruct UD Q4_K_XL
+  Qwen2.5-Coder 7B Instruct Q4_K_M
+  DeepSeek-Coder 6.7B Q4_K_M
+
+BALANCED:
+  Qwen3 8B Instruct Q4_K_M  (tight — test VRAM headroom)
+  Llama 3.1 8B Instruct Q4_K_M
+
+STRETCH:
+  Qwen3.6 35B A3B UD Q4_K_XL (MoE — partial CPU offload required)
+  Warning: keep context <= 8192 tokens; do not run alongside VRAM-heavy processes
+  Warning: monitor swap — 7GB swap detected
+
+===== Runtime Notes =====
+WARNING: 7GB swap currently in use. Stretch-class offload will compete with active swap.
+         Consider closing background processes before loading large models.
+Runtime: llama.cpp / llama-server
+Flags:   -ngl 99 --flash-attn on --jinja
+For MoE: add --n-cpu-moe 999 to offload MoE routing layers to CPU

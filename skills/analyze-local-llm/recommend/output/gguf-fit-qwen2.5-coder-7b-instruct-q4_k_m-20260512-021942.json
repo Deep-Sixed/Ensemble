@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-05-12T02:19:42.369947",
+  "model": "qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+  "model_path": "/home/jarvis/projects/ensemble/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+  "hardware_profile": "/home/jarvis/projects/ensemble/skills/analyze-local-llm/hardware-report/linux-hardware-20260512-020307.json",
+  "model_info": {
+    "architecture": "qwen2",
+    "quantization": "Q3_K_M",
+    "n_layers": 28,
+    "n_kv_heads": 4,
+    "head_dim": 128,
+    "max_context": 131072,
+    "weights_mb": 3315,
+    "file_size_mb": 4466
+  },
+  "kv_cache_mb": {
+    "4k": 224,
+    "8k": 448,
+    "32k": 1792
+  },
+  "total_vram_needed_mb": {
+    "4k_ctx": 3539,
+    "8k_ctx": 3763,
+    "32k_ctx": 5107
+  },
+  "hardware": {
+    "vram_mb": 8192,
+    "vram_free_mb": 7703,
+    "ram_gb": 22,
+    "ram_available_gb": 14
+  },
+  "fit": {
+    "verdict": "fits_in_vram",
+    "verdict_label": "Fits cleanly in VRAM",
+    "recommended_ngl": 28,
+    "vram_headroom_mb": 4164,
+    "ram_spillover_gb": 0.0
+  },
+  "launch_flags": "-ngl 28 --flash-attn on --jinja"
+}

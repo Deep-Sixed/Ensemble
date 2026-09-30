@@ -49,6 +49,6 @@ services:
       ENSEMBLE_MAX_FILE_BYTES: "${ENSEMBLE_MAX_FILE_BYTES:-200000}"
     volumes:
       - .:/app
-      - ${ENSEMBLE_WORKSPACE:-/home/jarvis/jarvis/talent-beacon}:/workspace:ro
+      - ${ENSEMBLE_WORKSPACE:-/home/jarvis/projects/nexus}:/workspace:ro
     working_dir: /app
     command: ["ensemble", "chat", "--classic"]

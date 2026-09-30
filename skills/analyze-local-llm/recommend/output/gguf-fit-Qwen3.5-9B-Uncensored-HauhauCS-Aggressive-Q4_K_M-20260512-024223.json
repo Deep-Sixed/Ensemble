@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-05-12T02:42:23.624305",
+  "backend": "gguf-parser v0.24.0",
+  "model": "Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf",
+  "model_path": "/home/jarvis/projects/ensemble/models/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf",
+  "hardware_profile": "/home/jarvis/projects/ensemble/skills/analyze-local-llm/hardware-report/linux-hardware-20260512-020307.json",
+  "model_info": {
+    "architecture": "qwen35",
+    "quantization": "Q3_K_M",
+    "n_layers": 32,
+    "n_kv_heads": 4,
+    "head_dim": 256,
+    "max_context": 262144,
+    "weights_mb": 3906,
+    "file_size_mb": 5366
+  },
+  "kv_cache_mb": {
+    "4k": 6054,
+    "8k": 520,
+    "32k": 3640
+  },
+  "total_vram_needed_mb": {
+    "4k_ctx": 6574,
+    "8k_ctx": 7094,
+    "32k_ctx": 10214
+  },
+  "hardware": {
+    "vram_mb": 8192,
+    "vram_free_mb": 7703,
+    "ram_gb": 22,
+    "ram_available_gb": 14
+  },
+  "fit": {
+    "verdict": "fits_in_vram",
+    "verdict_label": "Fits cleanly in VRAM",
+    "recommended_ngl": 32,
+    "vram_headroom_mb": 1129,
+    "ram_spillover_gb": 0.0
+  },
+  "launch_flags": "-ngl 32 --flash-attn on --jinja"
+}

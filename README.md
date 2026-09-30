@@ -18,8 +18,8 @@ The substrate is load-bearing. Ensemble is not positioned as "run a local
 model through a generic agent loop"; it is positioned as a local launchpad for
 Qwen-class coding workflows.
 
-This is its own project. It is not a fork of Talent-Beacon or OpenMono. It
-borrows Talent-Beacon's working conventions: Python project layout, Docker
+This is its own project. It is not a fork of Nexus or OpenMono. It
+borrows Nexus's working conventions: Python project layout, Docker
 discipline, `.env.example`, MCP access boundaries, and operator-controlled
 behavior.
 
@@ -93,7 +93,7 @@ Ensemble Substrate
 ## Core Architecture
 
 ```text
-Talent-Beacon = real app / workflow
+Nexus = real app / workflow
 Ensemble      = local model + tool-control lab mounted against a workspace
 ```
 
@@ -422,7 +422,7 @@ ensemble chat --classic
 By default, the workspace is:
 
 ```text
-/home/jarvis/jarvis/talent-beacon
+/home/jarvis/projects/nexus
 ```
 
 List files:
