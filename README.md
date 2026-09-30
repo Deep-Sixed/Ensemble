@@ -1,6 +1,6 @@
 # Ensemble
 
-Ensemble is a lean local AI development substrate for JARVIS: inference,
+Ensemble is a lean local AI development substrate: inference,
 privacy, code context, MCP tools, and markdown-based operating guidance stay
 local by default.
 
@@ -18,10 +18,9 @@ The substrate is load-bearing. Ensemble is not positioned as "run a local
 model through a generic agent loop"; it is positioned as a local launchpad for
 Qwen-class coding workflows.
 
-This is its own project. It is not a fork of Nexus or OpenMono. It
-borrows Nexus's working conventions: Python project layout, Docker
-discipline, `.env.example`, MCP access boundaries, and operator-controlled
-behavior.
+This is its own project. It is not a fork of OpenMono. It follows a small
+set of working conventions: Python project layout, Docker discipline,
+`.env.example`, MCP access boundaries, and operator-controlled behavior.
 
 ## Purpose
 
@@ -93,8 +92,8 @@ Ensemble Substrate
 ## Core Architecture
 
 ```text
-Nexus = real app / workflow
-Ensemble      = local model + tool-control lab mounted against a workspace
+Workspace = the real app / project you are working on
+Ensemble  = local model + tool-control lab mounted against that workspace
 ```
 
 Runtime shape:
@@ -180,8 +179,9 @@ Large Qwen server shape, when running a host-level `llama-server`:
 ```bash
 export LLAMACPP_API_KEY=noop
 
+# Run from the Ensemble repo root.
 llama-server \
-  -m /home/jarvis/projects/third-party/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf \
+  -m models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf \
   --host 127.0.0.1 \
   --port 8888 \
   --jinja \
@@ -295,7 +295,7 @@ MCP config:
     "code-review-graph": {
       "command": "code-review-graph",
       "args": ["serve"],
-      "cwd": "/home/jarvis/projects/third-party/ensemble"
+      "cwd": "/path/to/ensemble"
     }
   }
 }
@@ -328,16 +328,17 @@ v1 is deliberately conservative:
 Create local config:
 
 ```bash
-cd /home/jarvis/projects/third-party/ensemble
+cd /path/to/ensemble
 cp .env.example .env
 make bootstrap
 ```
 
-The model is canonical at:
+Place GGUF weights under `models/` in the repo, or point
+`ENSEMBLE_HOST_MODEL_DIR` at another directory:
 
 ```text
-/home/jarvis/projects/third-party/ensemble/models/qwen3-4b-instruct-2507-ud-q4_k_xl.gguf
-/home/jarvis/projects/third-party/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
+models/qwen3-4b-instruct-2507-ud-q4_k_xl.gguf
+models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
 ```
 
 Docker mounts `models/` read-only at `/models`. Choose the active model with
@@ -420,10 +421,11 @@ ensemble chat --classic
 
 ## Milestone 3: Read-Only Repo Context
 
-By default, the workspace is:
+The workspace is set by `ENSEMBLE_WORKSPACE` in `.env`. Point it at the
+project you want Ensemble to read, and keep it outside Ensemble itself:
 
 ```text
-/home/jarvis/projects/nexus
+ENSEMBLE_WORKSPACE=/path/to/your/project
 ```
 
 List files:
@@ -464,7 +466,7 @@ boringly reliable.
 ## Project Layout
 
 ```text
-/home/jarvis/projects/third-party/ensemble/
+ensemble/
   AGENTS.md
   Makefile
   docker-compose.yml

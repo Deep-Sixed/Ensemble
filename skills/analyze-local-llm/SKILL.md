@@ -127,7 +127,7 @@ Largest model viable with acceptable compromises.
 
 ---
 
-## JARVIS Default Profile
+## Reference Host Default Profile
 
 Hardware:
 - GPU: RTX 3060 Ti
