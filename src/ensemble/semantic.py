@@ -24,7 +24,7 @@ async def build_semantic_context_packet(
     token_budget: int = 12_000,
     max_file_bytes: int = 200_000,
     max_files: int = 40,
-    skill_root: str | Path = "skills",
+    skill_root: str | Path | None = None,
     max_symbols: int = 30,
     max_navigation_symbols: int = 8,
 ) -> ContextPacket:

@@ -108,7 +108,10 @@ def build_parser() -> argparse.ArgumentParser:
     context.add_argument("task", help="Task or question the context should support")
     context.add_argument("--token-budget", type=int, help="Maximum estimated context tokens")
     context.add_argument("--max-files", type=int, default=40, help="Maximum ranked files to consider")
-    context.add_argument("--skills", default="skills", help="Skill-card directory")
+    context.add_argument(
+        "--skills",
+        help="Skill-card directory (default: the skill cards bundled with Ensemble)",
+    )
     context.add_argument(
         "--no-semantic",
         action="store_true",

@@ -21,6 +21,9 @@ ensemble = "ensemble.cli:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/ensemble"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"skills" = "ensemble/_skills"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]

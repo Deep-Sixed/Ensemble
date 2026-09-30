@@ -39,7 +39,7 @@ def build_context_packet(
     token_budget: int = 12_000,
     max_file_bytes: int = 200_000,
     max_files: int = 40,
-    skill_root: str | Path = "skills",
+    skill_root: str | Path | None = None,
 ) -> ContextPacket:
     budget = ContextBudget(token_budget)
     discovered = discover_workspace_files(

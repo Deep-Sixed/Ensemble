@@ -21,28 +21,24 @@ def load_skill(path: str | Path) -> SkillCard:
     )
 
 
-def select_skill_paths(task: str, root: str | Path = "skills") -> list[Path]:
+def default_skill_root() -> Path:
+    """Bundled skill cards: packaged copy in a wheel, repo `skills/` in a checkout."""
+    package_dir = Path(__file__).resolve().parent
+    packaged = package_dir / "_skills"
+    if packaged.is_dir():
+        return packaged
+    return package_dir.parents[1] / "skills"
+
+
+def select_skill_paths(task: str, root: str | Path | None = None) -> list[Path]:
     text = task.lower()
-    skill_root = Path(root)
+    skill_root = Path(root) if root is not None else default_skill_root()
     selected: list[Path] = []
 
     rules = [
         ("", skill_root / "ensemble-technical" / "SKILL.md"),
         ("repo", skill_root / "repo-audit.md"),
         ("audit", skill_root / "repo-audit.md"),
-        ("docker", skill_root / "docker-sandbox.md"),
-        ("email", skill_root / "email-draft-polish" / "SKILL.md"),
-        ("mail", skill_root / "email-draft-polish" / "SKILL.md"),
-        ("draft", skill_root / "email-draft-polish" / "SKILL.md"),
-        ("reply", skill_root / "email-draft-polish" / "SKILL.md"),
-        ("outreach", skill_root / "email-draft-polish" / "SKILL.md"),
-        ("learning", skill_root / "learning-systems" / "SKILL.md"),
-        ("feedback", skill_root / "learning-systems" / "SKILL.md"),
-        ("outcome", skill_root / "learning-systems" / "SKILL.md"),
-        ("pattern", skill_root / "learning-systems" / "SKILL.md"),
-        ("confidence", skill_root / "learning-systems" / "SKILL.md"),
-        ("decay", skill_root / "learning-systems" / "SKILL.md"),
-        ("anti-pattern", skill_root / "learning-systems" / "SKILL.md"),
         ("patch", skill_root / "protocols" / "patch-proposal.md"),
         ("edit", skill_root / "protocols" / "patch-proposal.md"),
         ("implement", skill_root / "protocols" / "karpathy-guidelines.md"),
@@ -53,7 +49,6 @@ def select_skill_paths(task: str, root: str | Path = "skills") -> list[Path]:
         ("code", skill_root / "protocols" / "karpathy-guidelines.md"),
         ("write", skill_root / "tools" / "guarded-tools.md"),
         ("shell", skill_root / "tools" / "guarded-tools.md"),
-        ("qwen", skill_root / "protocols" / "small-model-native-agent.md"),
         ("local", skill_root / "ensemble.md"),
     ]
 
@@ -67,7 +62,7 @@ def select_skill_paths(task: str, root: str | Path = "skills") -> list[Path]:
     return selected
 
 
-def inject_skill_cards(task: str, root: str | Path = "skills") -> str:
+def inject_skill_cards(task: str, root: str | Path | None = None) -> str:
     cards = [load_skill(path) for path in select_skill_paths(task, root)]
     if not cards:
         return ""
