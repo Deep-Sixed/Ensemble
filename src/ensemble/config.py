@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from ensemble.paths import default_workspace
+
 try:
     from dotenv import load_dotenv
 except ModuleNotFoundError:
@@ -46,9 +48,7 @@ def load_config(
     else:
         load_dotenv()
 
-    workspace = Path(
-        _env("ENSEMBLE_WORKSPACE") or "/home/jarvis/projects/nexus"
-    ).expanduser()
+    workspace = default_workspace()
 
     if profile_override is not None:
         profile_name = profile_override
@@ -74,7 +74,7 @@ def load_config(
     # for LLM endpoint fields so ENSEMBLE_LLM_BASE_URL does not mask base_url.
     if profile_override is not None:
         return EnsembleConfig(
-            llm_base_url=profile_base_url or "http://localhost:8080/v1",
+            llm_base_url=profile_base_url or "http://localhost:8888/v1",
             llm_model=profile_model or "qwen2.5-coder-7b-instruct-q4_k_m",
             api_key=profile_api_key or "ensemble",
             profile=profile_name,
@@ -90,7 +90,7 @@ def load_config(
         llm_base_url=(
             _env("ENSEMBLE_LLM_BASE_URL")
             or profile_base_url
-            or "http://localhost:8080/v1"
+            or "http://localhost:8888/v1"
         ),
         llm_model=(
             _env("ENSEMBLE_LLM_MODEL")

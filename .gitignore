@@ -31,6 +31,13 @@ state/evidence/tool-results/*
 
 # Model weights — too large for git
 models/*.gguf
+*.gguf
+
+# Skill run artifacts (generated locally)
+skills/analyze-local-llm/collect/hardware-report/*
+!skills/analyze-local-llm/collect/hardware-report/.gitkeep
+skills/analyze-local-llm/recommend/output/*
+!skills/analyze-local-llm/recommend/output/.gitkeep
 
 # Local secrets
 secret.env

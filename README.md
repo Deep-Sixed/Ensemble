@@ -156,14 +156,14 @@ want the equivalent of picking another model from a model selector:
 Default Docker lane:
 
 ```bash
-docker compose --env-file docker/qwen3-4b.env up -d llm
+docker compose --env-file docker/qwen3-4b.conf up -d llm
 .venv/bin/ensemble health --profile auto
 ```
 
 Explicit 35B reasoning/offload lane:
 
 ```bash
-docker compose --env-file docker/qwen3.6-35b.env up -d llm
+docker compose --env-file docker/qwen3.6-35b.conf up -d llm
 .venv/bin/ensemble health --profile qwen3.6-35b-a3b.docker
 ```
 
@@ -181,7 +181,7 @@ Large Qwen server shape, when running a host-level `llama-server`:
 export LLAMACPP_API_KEY=noop
 
 llama-server \
-  -m /home/jarvis/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf \
+  -m /home/jarvis/projects/third-party/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf \
   --host 127.0.0.1 \
   --port 8888 \
   --jinja \
@@ -295,7 +295,7 @@ MCP config:
     "code-review-graph": {
       "command": "code-review-graph",
       "args": ["serve"],
-      "cwd": "/home/jarvis/ensemble"
+      "cwd": "/home/jarvis/projects/third-party/ensemble"
     }
   }
 }
@@ -328,15 +328,16 @@ v1 is deliberately conservative:
 Create local config:
 
 ```bash
-cd /home/jarvis/ensemble
+cd /home/jarvis/projects/third-party/ensemble
 cp .env.example .env
+make bootstrap
 ```
 
 The model is canonical at:
 
 ```text
-/home/jarvis/ensemble/models/qwen3-4b-instruct-2507-ud-q4_k_xl.gguf
-/home/jarvis/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
+/home/jarvis/projects/third-party/ensemble/models/qwen3-4b-instruct-2507-ud-q4_k_xl.gguf
+/home/jarvis/projects/third-party/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
 ```
 
 Docker mounts `models/` read-only at `/models`. Choose the active model with
@@ -348,19 +349,19 @@ files under `docker/`.
 Build and start the server:
 
 ```bash
-docker compose --env-file docker/qwen3-4b.env up -d llm
+docker compose --env-file docker/qwen3-4b.conf up -d llm
 ```
 
 Confirm the OpenAI-compatible models endpoint:
 
 ```bash
-curl -fsS http://localhost:8080/v1/models
+curl -fsS http://localhost:8888/v1/models
 ```
 
 Confirm a chat completion:
 
 ```bash
-curl -fsS http://localhost:8080/v1/chat/completions \
+curl -fsS http://localhost:8888/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ensemble" \
   -d '{
@@ -463,52 +464,25 @@ boringly reliable.
 ## Project Layout
 
 ```text
-/home/jarvis/ensemble
+/home/jarvis/projects/third-party/ensemble/
+  AGENTS.md
+  Makefile
   docker-compose.yml
+  docker-compose.models.yml
   .env.example
   README.md
 
+  src/ensemble/       # Python package
+  ensemble-vscode/    # VS Code / Cursor extension
+  router/             # Multi-model FastAPI router
   docker/
-    llama-cpp-python.Dockerfile
-    agent.Dockerfile
-
-  models/
-    qwen3.6-35b-a3b-ud-q4_k_xl.gguf -> /home/jarvis/openmono.ai/models/...
-
   profiles/
-    qwen3.6-35b-a3b.local.json
-    smoke.local.json
-
   mcp/
-    filesystem.json
-    code-review-graph.json
-    codebase-memory.json
-    python-tools.json
-
   skills/
-    ensemble.md
-    repo-audit.md
-    safe-coding.md
-    docker-sandbox.md
-    tools/
-      guarded-tools.md
-    protocols/
-      small-model-native-agent.md
-      patch-proposal.md
-
-  state/
-    checkpoints/
-    evidence/
-
-  src/ensemble/
-    checkpoints.py
-    config.py
-    memory.py
-    model.py
-    mcp_registry.py
-    quality.py
-    sandbox_runner.py
-    skills.py
-    tool_modes.py
-    cli.py
+  scripts/
+  tests/
+  docs/
+  systemd/
+  models/             # GGUF weights (gitignored)
+  state/              # Runtime checkpoints and evidence
 ```

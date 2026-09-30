@@ -6,7 +6,8 @@
   "publisher": "ensemble",
   "license": "UNLICENSED",
   "engines": {
-    "vscode": "^1.96.0"
+    "vscode": "^1.96.0",
+    "node": "26.3.0"
   },
   "categories": [
     "AI",
@@ -25,9 +26,13 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "vsce package"
+    "package": "vsce package",
+    "lint": "biome lint src/",
+    "format": "biome format --write src/",
+    "check": "biome check --write src/"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
     "@types/node": "^22.10.1",
     "@types/vscode": "^1.96.0",
     "@vscode/vsce": "^3.2.1",

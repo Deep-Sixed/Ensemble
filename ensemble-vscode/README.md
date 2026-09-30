@@ -2,16 +2,18 @@
 
 Ensemble sidebar and editor commands for the local llama.cpp server.
 
-Default endpoint:
+Default endpoint (multi-model router):
 
 ```text
-http://127.0.0.1:8888/v1
+http://127.0.0.1:8090/v1
 ```
+
+Single-model Docker stack (`docker-compose.yml`) uses port 8888 instead.
 
 Default model:
 
 ```text
-qwen3-4b-instruct-2507-ud-q4_k_xl
+qwen2.5-coder-7b-instruct-q4_k_m
 ```
 
 ## Roadmap
@@ -28,9 +30,11 @@ qwen3-4b-instruct-2507-ud-q4_k_xl
 Build and package:
 
 ```bash
-npm install
-npm run compile
-npx @vscode/vsce package
+mise install          # Node 26.3.0 per mise.toml / .nvmrc
+mise exec -- npm install
+mise exec -- npm run compile
+mise exec -- npm run check
+mise exec -- npx @vscode/vsce package
 ```
 
 Install:

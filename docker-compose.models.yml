@@ -1,7 +1,8 @@
 services:
   qwen25-coder:
     image: ghcr.io/ggml-org/llama.cpp:server
-    container_name: qwen25-coder
+    container_name: ensemble-qwen25-coder
+    profiles: [qwen25-coder]
     command:
       - --model
       - /models/qwen2.5-coder-7b-instruct-q4_k_m.gguf
@@ -17,13 +18,14 @@ services:
       - "6"
       - --no-webui
     volumes:
-      - /home/jarvis/ensemble/models:/models:ro
+      - ${ENSEMBLE_HOST_MODEL_DIR:-/home/jarvis/projects/third-party/ensemble/models}:/models:ro
     networks: [ensemble-net]
     restart: unless-stopped
 
   qwen3-4b:
     image: ghcr.io/ggml-org/llama.cpp:server
-    container_name: qwen3-4b
+    container_name: ensemble-qwen3-4b
+    profiles: [qwen3-4b]
     command:
       - --model
       - /models/qwen3-4b-instruct-2507-ud-q4_k_xl.gguf
@@ -39,13 +41,14 @@ services:
       - "6"
       - --no-webui
     volumes:
-      - /home/jarvis/ensemble/models:/models:ro
+      - ${ENSEMBLE_HOST_MODEL_DIR:-/home/jarvis/projects/third-party/ensemble/models}:/models:ro
     networks: [ensemble-net]
     restart: unless-stopped
 
   qwen36-35b:
     image: ghcr.io/ggml-org/llama.cpp:server
-    container_name: qwen36-35b
+    container_name: ensemble-qwen36-35b
+    profiles: [qwen36-35b]
     command:
       - --model
       - /models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
@@ -59,13 +62,14 @@ services:
       - "8192"
       - --no-webui
     volumes:
-      - /home/jarvis/ensemble/models:/models:ro
+      - ${ENSEMBLE_HOST_MODEL_DIR:-/home/jarvis/projects/third-party/ensemble/models}:/models:ro
     networks: [ensemble-net]
     restart: unless-stopped
 
   qwen35-uncensored:
     image: ghcr.io/ggml-org/llama.cpp:server
-    container_name: qwen35-uncensored
+    container_name: ensemble-qwen35-uncensored
+    profiles: [qwen35-uncensored]
     command:
       - --model
       - /models/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf
@@ -81,13 +85,13 @@ services:
       - "6"
       - --no-webui
     volumes:
-      - /home/jarvis/ensemble/models:/models:ro
+      - ${ENSEMBLE_HOST_MODEL_DIR:-/home/jarvis/projects/third-party/ensemble/models}:/models:ro
     networks: [ensemble-net]
     restart: unless-stopped
 
   local-model-router:
     build: ./router
-    container_name: local-model-router
+    container_name: ensemble-router
     environment:
       DEFAULT_MODEL: qwen2.5-coder
       QWEN25_CODER_URL: http://qwen25-coder:8080
@@ -97,11 +101,6 @@ services:
     ports:
       - "127.0.0.1:8090:8090"
     networks: [ensemble-net]
-    depends_on:
-      - qwen25-coder
-      - qwen3-4b
-      - qwen36-35b
-      - qwen35-uncensored
     restart: unless-stopped
 
 networks:

@@ -16,7 +16,7 @@ type EnsembleConfig = {
 const SYSTEM_PROMPT = [
   "You are Ensemble, a technical local AI assistant for homelab, coding, Docker, Linux, model serving, MCP, LSP, indexing, and repo automation.",
   "Use direct technical answers. Avoid emojis, corporate assistant tone, personhood claims, and exaggerated praise.",
-  "Default model is qwen2.5-coder-7b-instruct-q4_k_m. Qwen3 4B is fast/general. Qwen3.6 35B is explicit reasoning mode only."
+  "Default model is qwen2.5-coder-7b-instruct-q4_k_m. Qwen3 4B is fast/general. Qwen3.6 35B is explicit reasoning mode only.",
 ].join("\n");
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -26,12 +26,17 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     statusBar,
     vscode.window.registerWebviewViewProvider("ensemble.chat", chatProvider),
-    vscode.commands.registerCommand("ensemble.checkHealth", () => checkHealth(statusBar)),
+    vscode.commands.registerCommand("ensemble.checkHealth", () =>
+      checkHealth(statusBar),
+    ),
     vscode.commands.registerCommand("ensemble.askSelection", askSelection),
     vscode.commands.registerCommand("ensemble.askCurrentFile", askCurrentFile),
-    vscode.commands.registerCommand("ensemble.reviewWorkspace", reviewWorkspace),
+    vscode.commands.registerCommand(
+      "ensemble.reviewWorkspace",
+      reviewWorkspace,
+    ),
     vscode.commands.registerCommand("ensemble.applyPatch", applyPatch),
-    vscode.commands.registerCommand("ensemble.openSettings", openSettings)
+    vscode.commands.registerCommand("ensemble.openSettings", openSettings),
   );
 
   statusBar.check();
@@ -46,12 +51,16 @@ async function checkHealth(statusBar?: EnsembleStatusBar): Promise<void> {
   const config = getConfig();
   try {
     const models = await getModels(config);
-    const active = models.map((model) => model.id ?? model.name ?? String(model)).join(", ");
+    const active = models
+      .map((model) => model.id ?? model.name ?? String(model))
+      .join(", ");
     statusBar?.setHealthy(displayModelName(active));
     vscode.window.showInformationMessage(`Ensemble healthy: ${active}`);
   } catch (error) {
     statusBar?.setOffline();
-    vscode.window.showErrorMessage(`Ensemble health check failed: ${formatError(error)}`);
+    vscode.window.showErrorMessage(
+      `Ensemble health check failed: ${formatError(error)}`,
+    );
   }
 }
 
@@ -65,7 +74,7 @@ async function askSelection(): Promise<void> {
   const selected = editor.document.getText(editor.selection);
   const prompt = await vscode.window.showInputBox({
     prompt: "Ask Ensemble about the selected text",
-    value: "Explain this selection and point out risks."
+    value: "Explain this selection and point out risks.",
   });
   if (!prompt) {
     return;
@@ -83,7 +92,7 @@ async function askCurrentFile(): Promise<void> {
 
   const prompt = await vscode.window.showInputBox({
     prompt: "Ask Ensemble about the current file",
-    value: "Summarize this file and identify likely maintenance risks."
+    value: "Summarize this file and identify likely maintenance risks.",
   });
   if (!prompt) {
     return;
@@ -97,8 +106,8 @@ async function askCurrentFile(): Promise<void> {
       `File: ${document.uri.fsPath}`,
       "```",
       document.getText(),
-      "```"
-    ].join("\n")
+      "```",
+    ].join("\n"),
   );
 }
 
@@ -113,21 +122,21 @@ async function reviewWorkspace(): Promise<void> {
     [
       "Review this workspace at a high level.",
       "Focus on architecture risks, verification gaps, and next commands to run.",
-      `Workspace: ${root}`
-    ].join("\n")
+      `Workspace: ${root}`,
+    ].join("\n"),
   );
 }
 
 async function applyPatch(): Promise<void> {
   vscode.window.showInformationMessage(
-    "Patch application is not enabled in the extension MVP. Use Ensemble CLI checkpointed edits."
+    "Patch application is not enabled in the extension MVP. Use Ensemble CLI checkpointed edits.",
   );
 }
 
 async function openSettings(): Promise<void> {
   await vscode.commands.executeCommand(
     "workbench.action.openSettings",
-    "@ext:ensemble.ensemble"
+    "@ext:ensemble.ensemble",
   );
 }
 
@@ -147,12 +156,14 @@ async function askAndShow(prompt: string): Promise<void> {
   try {
     const result = await chat(config, [
       { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: prompt }
+      { role: "user", content: prompt },
     ]);
     panel.appendLine(result);
   } catch (error) {
     panel.appendLine(`Error: ${formatError(error)}`);
-    vscode.window.showErrorMessage(`Ensemble request failed: ${formatError(error)}`);
+    vscode.window.showErrorMessage(
+      `Ensemble request failed: ${formatError(error)}`,
+    );
   }
 }
 
@@ -165,18 +176,20 @@ class EnsembleChatProvider implements vscode.WebviewViewProvider {
     this.view = webviewView;
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this.extensionUri]
+      localResourceRoots: [this.extensionUri],
     };
     webviewView.webview.html = this.html(webviewView.webview);
 
-    webviewView.webview.onDidReceiveMessage(async (message: { type: string; text?: string }) => {
-      if (message.type === "health") {
-        await this.postHealth();
-      }
-      if (message.type === "ask" && message.text) {
-        await this.postAnswer(message.text);
-      }
-    });
+    webviewView.webview.onDidReceiveMessage(
+      async (message: { type: string; text?: string }) => {
+        if (message.type === "health") {
+          await this.postHealth();
+        }
+        if (message.type === "ask" && message.text) {
+          await this.postAnswer(message.text);
+        }
+      },
+    );
   }
 
   private async postHealth(): Promise<void> {
@@ -185,10 +198,13 @@ class EnsembleChatProvider implements vscode.WebviewViewProvider {
       const models = await getModels(config);
       this.post({
         type: "status",
-        text: `Healthy. Models: ${models.map((model) => model.id ?? model.name).join(", ")}`
+        text: `Healthy. Models: ${models.map((model) => model.id ?? model.name).join(", ")}`,
       });
     } catch (error) {
-      this.post({ type: "status", text: `Health failed: ${formatError(error)}` });
+      this.post({
+        type: "status",
+        text: `Health failed: ${formatError(error)}`,
+      });
     }
   }
 
@@ -198,12 +214,15 @@ class EnsembleChatProvider implements vscode.WebviewViewProvider {
     try {
       const answer = await chat(config, [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: prompt }
+        { role: "user", content: prompt },
       ]);
       this.post({ type: "answer", text: answer });
       this.post({ type: "status", text: `Ready. ${config.model}` });
     } catch (error) {
-      this.post({ type: "status", text: `Request failed: ${formatError(error)}` });
+      this.post({
+        type: "status",
+        text: `Request failed: ${formatError(error)}`,
+      });
     }
   }
 
@@ -262,7 +281,10 @@ class EnsembleStatusBar implements vscode.Disposable {
   private timer?: NodeJS.Timeout;
 
   constructor() {
-    this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    this.item = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Right,
+      100,
+    );
     this.item.command = "ensemble.checkHealth";
     this.item.tooltip = "Ensemble health. Click to check backend status.";
     this.setChecking();
@@ -295,12 +317,14 @@ class EnsembleStatusBar implements vscode.Disposable {
 
   setHealthy(modelName: string): void {
     this.item.text = `$(circle-filled) Ensemble: ${modelName}`;
-    this.item.tooltip = "Ensemble backend is healthy. Click to run health check.";
+    this.item.tooltip =
+      "Ensemble backend is healthy. Click to run health check.";
   }
 
   setOffline(): void {
     this.item.text = "$(warning) Ensemble: Offline";
-    this.item.tooltip = "Ensemble backend is offline. Click to run health check.";
+    this.item.tooltip =
+      "Ensemble backend is offline. Click to run health check.";
   }
 
   dispose(): void {
@@ -314,58 +338,74 @@ class EnsembleStatusBar implements vscode.Disposable {
 function getConfig(): EnsembleConfig {
   const config = vscode.workspace.getConfiguration("ensemble");
   return {
-    baseUrl: trimTrailingSlash(config.get("baseUrl", "http://127.0.0.1:8090/v1")),
+    baseUrl: trimTrailingSlash(
+      config.get("baseUrl", "http://127.0.0.1:8090/v1"),
+    ),
     model: config.get("model", "qwen2.5-coder-7b-instruct-q4_k_m"),
     apiKey: config.get("apiKey", "ensemble"),
     maxTokens: config.get("maxTokens", 1024),
-    temperature: config.get("temperature", 0.2)
+    temperature: config.get("temperature", 0.2),
   };
 }
 
-async function getModels(config: EnsembleConfig): Promise<Array<Record<string, unknown>>> {
+async function getModels(
+  config: EnsembleConfig,
+): Promise<Array<Record<string, unknown>>> {
   const response = await fetchJson(`${config.baseUrl}/models`, {
     method: "GET",
-    headers: headers(config)
+    headers: headers(config),
   });
   const data = response.data;
   return Array.isArray(data) ? data : [];
 }
 
-async function chat(config: EnsembleConfig, messages: ChatMessage[]): Promise<string> {
+async function chat(
+  config: EnsembleConfig,
+  messages: ChatMessage[],
+): Promise<string> {
   const response = await fetchJson(`${config.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       ...headers(config),
-      "content-type": "application/json"
+      "content-type": "application/json",
     },
     body: JSON.stringify({
       model: config.model,
       messages,
       max_tokens: config.maxTokens,
       temperature: config.temperature,
-      stream: false
-    })
+      stream: false,
+    }),
   });
 
-  const content = response.choices?.[0]?.message?.content;
+  const choices = response.choices;
+  const firstChoice =
+    Array.isArray(choices) && choices.length > 0
+      ? (choices[0] as Record<string, unknown>)
+      : undefined;
+  const message = firstChoice?.message as Record<string, unknown> | undefined;
+  const content = message?.content;
   if (typeof content !== "string") {
     throw new Error("No message content returned");
   }
   return content;
 }
 
-async function fetchJson(url: string, init: RequestInit): Promise<any> {
+async function fetchJson(
+  url: string,
+  init: RequestInit,
+): Promise<Record<string, unknown>> {
   const response = await fetch(url, init);
   if (!response.ok) {
     const text = await response.text();
     throw new Error(`${response.status} ${response.statusText}: ${text}`);
   }
-  return response.json();
+  return response.json() as Promise<Record<string, unknown>>;
 }
 
 function headers(config: EnsembleConfig): Record<string, string> {
   return {
-    authorization: `Bearer ${config.apiKey}`
+    authorization: `Bearer ${config.apiKey}`,
   };
 }
 

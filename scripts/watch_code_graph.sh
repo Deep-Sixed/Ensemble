@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="${ENSEMBLE_ROOT:-/home/jarvis/ensemble}"
+ROOT_DIR="${ENSEMBLE_ROOT:-/home/jarvis/projects/third-party/ensemble}"
 
 cd "$ROOT_DIR"
 
