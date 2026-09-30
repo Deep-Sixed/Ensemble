@@ -34,3 +34,28 @@ Pyright/LSP
   -> SymbolLookup
   -> ImpactAnalysis
 ```
+
+## Commands
+
+```bash
+ensemble symbols index src/                          # -> .ensemble/symbols.jsonl
+ensemble graph symbols .ensemble/symbols.jsonl       # -> .ensemble/symbol-graph.jsonl
+ensemble lsp symbols --flat src/ensemble/cli.py      # one-off documentSymbol query
+ensemble lsp definition src/ensemble/cli.py 20 4     # zero-based line/character
+```
+
+Both indexing commands take `--out` to change the output path. `.ensemble/` is
+gitignored. Paths are not limited to `ENSEMBLE_WORKSPACE`.
+
+`SymbolLookup` and `ImpactAnalysis` (`ensemble.review`) are Python APIs only;
+there is no CLI for them yet.
+
+The LSP client starts a server per file type and needs it on `PATH`:
+
+| Extensions | Server command |
+|---|---|
+| `.py` | `pyright-langserver --stdio` |
+| `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs` | `typescript-language-server --stdio` |
+| `.rs` | `rust-analyzer` |
+| `.c`, `.h`, `.cpp`, `.hpp`, `.cc`, `.cxx` | `clangd --background-index` |
+| `.cs` | `OmniSharp --languageserver` |

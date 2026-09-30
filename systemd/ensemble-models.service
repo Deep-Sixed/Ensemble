@@ -1,5 +1,7 @@
 # Copy to /etc/systemd/system/ensemble-models.service
 # Then: sudo systemctl daemon-reload && sudo systemctl enable --now ensemble-models.service
+# Model services are Compose profiles; without COMPOSE_PROFILES this starts only
+# the router. Add e.g. Environment=COMPOSE_PROFILES=qwen25-coder via systemctl edit.
 
 [Unit]
 Description=Ensemble local LLM model stack

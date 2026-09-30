@@ -20,8 +20,8 @@ gguf-parser / internal parser owns:
 Usage:
     python3 gguf-fit.py <model.gguf> [hardware.json]
 
-hardware.json defaults to the latest in ../hardware-report/
-Emits JSON to stdout. Saves artifact to ../recommendations/
+hardware.json defaults to the latest in ../collect/hardware-report/
+Emits JSON to stdout. Saves artifact to ../recommend/output/
 """
 
 import json

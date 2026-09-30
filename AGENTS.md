@@ -15,7 +15,10 @@ Ensemble is a JARVIS local AI substrate. It is **not** Nexus, but it follows the
 ├── skills/                # Markdown operating guidance
 ├── scripts/               # Bootstrap and code-graph helpers
 ├── tests/                 # pytest unit tests
-└── docs/                  # Architecture notes
+├── docs/                  # Architecture notes
+├── tools/                 # Code-intelligence sidecar notes
+├── systemd/               # Unit file for the multi-model stack
+└── state/                 # Runtime checkpoints and evidence (payloads gitignored)
 ```
 
 ## Runtime policy
@@ -41,9 +44,9 @@ Never hardcode alternate paths (`/home/jarvis/ensemble`, `/home/jarvis/projects/
 Two supported local stacks:
 
 1. **Single-model** (`docker-compose.yml`) — llama-cpp-python on port **8888**, default Qwen3 4B.
-2. **Multi-model** (`docker-compose.models.yml`) — per-model llama.cpp servers + router on port **8090**.
+2. **Multi-model** (`docker-compose.models.yml`) — per-model llama.cpp servers + router on port **8090**, default Qwen2.5 Coder 7B. Model services are Compose profiles (`qwen25-coder`, `qwen3-4b`, `qwen36-35b`, `qwen35-uncensored`); `up -d` without `--profile` starts only the router.
 
-Profiles in `profiles/` select endpoints. Default profile `auto` targets the router at `http://127.0.0.1:8090/v1`.
+Profiles in `profiles/` select endpoints. Default profile `auto` targets the router at `http://127.0.0.1:8090/v1`. `ENSEMBLE_LLM_*` env vars override `ENSEMBLE_PROFILE`; only the CLI `--profile` flag overrides them. Run `ensemble` from the repo root — `profiles/`, `mcp/`, and `skills/` resolve relative to the current directory.
 
 ## Secrets
 
@@ -73,7 +76,7 @@ cd ensemble-vscode
 # nvm use   # or fnm use, if available
 npm install
 npm run compile
-npm run check     # Biome lint + format
+npm run check     # Biome lint + format (applies fixes in place)
 ```
 
 Backward-compat symlinks on this host:

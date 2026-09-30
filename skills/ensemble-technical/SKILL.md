@@ -49,9 +49,10 @@ Default style:
 
 ## Model Behavior
 
-The default model is:
+The default model depends on the stack:
 
-`qwen3-4b-instruct-2507-ud-q4_k_xl`
+- Single-model server (port 8888): `qwen3-4b-instruct-2507-ud-q4_k_xl`
+- Multi-model router (port 8090): `qwen2.5-coder-7b-instruct-q4_k_m`
 
 Qwen3.6 35B is an explicit reasoning-mode selection only.
 
@@ -77,4 +78,4 @@ Runtime:
 
 Endpoint:
 
-`http://10.0.0.151:8888/v1`
+`http://127.0.0.1:8888/v1`

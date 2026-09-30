@@ -9,8 +9,9 @@ through simple inspection utilities, and exposes local context to external
 agent/coding tools.
 
 Ensemble uses Qwen GGUF models through llama.cpp. On the current RTX 3060 Ti
-machine, the default lane is `qwen3-4b-instruct-2507-ud-q4_k_xl` for daily coding
-and low-latency tool use. The larger `qwen3.6-35b-a3b-ud-q4_k_xl` model remains
+machine, the multi-model router defaults to `qwen2.5-coder-7b-instruct-q4_k_m`
+and the single-model stack defaults to `qwen3-4b-instruct-2507-ud-q4_k_xl` for
+low-latency tool use. The larger `qwen3.6-35b-a3b-ud-q4_k_xl` model remains
 available as an explicit reasoning/offload lane, but it should not be the
 default on this VRAM budget.
 
@@ -64,7 +65,8 @@ Ensemble Substrate
         |
         +-- Inference
         |     +-- llama.cpp OpenAI-compatible endpoint
-        |     +-- Qwen3 4B coding default profile
+        |     +-- Qwen2.5 Coder 7B router default (auto profile)
+        |     +-- Qwen3 4B single-model default profile
         |     +-- Qwen3.6 35B explicit reasoning/offload profile
         |     +-- smoke profile for plumbing checks
         |
@@ -108,17 +110,26 @@ external agent/coding tool
 
 ## Model Strategy
 
-Ensemble has three inference lanes:
+Ensemble has two local serving stacks, each with its own default model:
 
-- Coding/default inference: llama.cpp plus Qwen3 4B Instruct GGUF.
-- Reasoning/offload inference: llama.cpp plus Qwen3.6 35B-A3B GGUF.
-- Smoke inference: a tiny/small GGUF only for boot tests and endpoint wiring.
+| Stack | Compose file | Endpoint | Default model |
+|---|---|---|---|
+| Single-model | `docker-compose.yml` | `http://127.0.0.1:8888/v1` | `qwen3-4b-instruct-2507-ud-q4_k_xl` |
+| Multi-model | `docker-compose.models.yml` | `http://127.0.0.1:8090/v1` (router) | `qwen2.5-coder-7b-instruct-q4_k_m` |
+
+Inference lanes:
+
+- Coding: llama.cpp plus Qwen2.5 Coder 7B Instruct GGUF. Router default, and
+  the target of the `auto` and `coding` profiles.
+- Fast/general: llama.cpp plus Qwen3 4B Instruct GGUF. Single-model default.
+- Reasoning/offload: llama.cpp plus Qwen3.6 35B-A3B GGUF. Explicit selection
+  only.
+- Smoke: a tiny/small GGUF only for boot tests and endpoint wiring.
 
 The smoke model proves Docker, llama.cpp, LangChain, MCP, CLI health, and
-endpoint plumbing. The 4B model is the default daily driver for an RTX 3060 Ti.
-The 35B model is useful for harder reasoning, but it is larger than the card's
-VRAM and should be run deliberately with constrained context and CPU/offload
-settings.
+endpoint plumbing. The 35B model is useful for harder reasoning, but it is
+larger than the card's VRAM and should be run deliberately with constrained
+context and CPU/offload settings.
 
 Profiles live under `profiles/`:
 
@@ -128,44 +139,96 @@ Profiles live under `profiles/`:
 
 Current profiles:
 
-```text
-auto.json                         # default: qwen3-4b coding lane
-qwen3-4b-local.json
-qwen3.6-35b-a3b.docker.json
-qwen3.6-35b-a3b.lan.json
-qwen3.6-35b-a3b.local.json
-smoke.local.json
-```
+| Profile | Endpoint | Model | Use |
+|---|---|---|---|
+| `auto` | router `:8090` | `qwen2.5-coder-7b-instruct-q4_k_m` | `ENSEMBLE_PROFILE` default |
+| `coding` | router `:8090` | `qwen2.5-coder-7b-instruct-q4_k_m` | Same as `auto` |
+| `qwen3-4b` | `:8888` | `qwen3-4b-instruct-2507-ud-q4_k_xl` | Single-model 4B lane |
+| `qwen3-4b-local` | `:8888` | `qwen3-4b-instruct-2507-ud-q4_k_xl` | Same as `qwen3-4b` |
+| `reasoning` | `:8888` | `qwen3.6-35b-a3b-ud-q4_k_xl` | Single-model 35B lane |
+| `qwen3.6-35b-a3b.local` | `:8888` | `qwen3.6-35b-a3b-ud-q4_k_xl.gguf` | Host-level `llama-server` (below) |
+| `qwen3.6-35b-a3b.docker` | `:8080` | `qwen3.6-35b-a3b-ud-q4_k_xl` | Legacy port; no bundled stack listens on `:8080` |
+| `qwen3.6-35b-a3b.lan` | `10.0.0.151:7474` | `qwen3.6-35b-a3b-ud-q4_k_xl` | LAN `llama-server` |
+| `smoke.local` | `:8888` | `smoke-test` | Plumbing checks |
 
-Model selection policy:
+Profile precedence: `ENSEMBLE_PROFILE` only fills settings the environment
+leaves unset. `ENSEMBLE_LLM_BASE_URL`, `ENSEMBLE_LLM_MODEL`, `ENSEMBLE_API_KEY`,
+`ENSEMBLE_MAX_TOKENS`, and `ENSEMBLE_TEMPERATURE` win over it, and
+`.env.example` sets all five for the single-model 4B server. With a fresh
+`.env`, commands without `--profile` therefore talk to `:8888` even though
+`ENSEMBLE_PROFILE=auto`.
 
-```text
-Auto / default  -> qwen3-4b-instruct-2507-ud-q4_k_xl
-Reasoning 35B   -> qwen3.6-35b-a3b-ud-q4_k_xl
-Smoke           -> smoke-test
-```
-
-Leave `ENSEMBLE_PROFILE=auto` for default behavior. Use `--profile` when you
-want the equivalent of picking another model from a model selector:
+`--profile` (on `health`, `models`, `ask`, and `chat`) uses that profile's
+endpoint, model, token settings, and `api_key_env` key, and ignores those
+five variables. It is the equivalent of picking another model from a model
+selector:
 
 ```bash
 .venv/bin/ensemble ask --profile auto "Summarize this repo."
-.venv/bin/ensemble ask --profile qwen3.6-35b-a3b.local "Reason through this design."
+.venv/bin/ensemble ask --profile reasoning "Reason through this design."
 ```
 
-Default Docker lane:
+### Single-model stack
+
+Default 4B lane:
 
 ```bash
 docker compose --env-file docker/qwen3-4b.conf up -d llm
-.venv/bin/ensemble health --profile auto
+.venv/bin/ensemble health --profile qwen3-4b
 ```
 
 Explicit 35B reasoning/offload lane:
 
 ```bash
 docker compose --env-file docker/qwen3.6-35b.conf up -d llm
-.venv/bin/ensemble health --profile qwen3.6-35b-a3b.docker
+.venv/bin/ensemble health --profile reasoning
 ```
+
+`docker/switch-qwen-model.sh` is a Compose-free alternative. It replaces a
+standalone `ensemble-qwen` container on `:8888` (llama.cpp `server-vulkan`
+image with the bundled web UI in `docker/llama-webui/`) and waits for
+`/v1/models`. Stop the Compose `llm` service first; both bind `:8888`.
+
+```bash
+./docker/switch-qwen-model.sh qwen3-4b    # or: reasoning
+```
+
+### Multi-model stack
+
+`docker-compose.models.yml` runs one llama.cpp server per model behind a
+FastAPI router on `127.0.0.1:8090`. Each model service is a Compose profile,
+so name the models you want. `up -d` without `--profile` starts only the
+router, which then has no upstream to forward to.
+
+```bash
+docker compose -f docker-compose.models.yml --profile qwen25-coder --profile qwen3-4b up -d
+curl -fsS http://127.0.0.1:8090/health
+.venv/bin/ensemble ask --profile auto "Say hello from Ensemble."
+```
+
+| Compose profile | Router model ID | GGUF file in `models/` |
+|---|---|---|
+| `qwen25-coder` | `qwen2.5-coder` (default) | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` |
+| `qwen3-4b` | `qwen3-4b` | `qwen3-4b-instruct-2507-ud-q4_k_xl.gguf` |
+| `qwen36-35b` | `qwen3.6-35b` | `qwen3.6-35b-a3b-ud-q4_k_xl.gguf` |
+| `qwen35-uncensored` | `qwen3.5-uncensored` | `Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf` |
+
+The router also accepts the full GGUF names (for example
+`qwen2.5-coder-7b-instruct-q4_k_m`) and sends unknown or missing model IDs to
+the default. Its `/v1/models` list is static, so `ensemble health --profile
+auto` reports OK even when no model service is running. Use `GET /health` to
+see which upstreams respond.
+
+`systemd/ensemble-models.service` runs the same `up -d` without profiles, so
+it also starts only the router. To start models at boot, add a drop-in:
+
+```ini
+# sudo systemctl edit ensemble-models.service
+[Service]
+Environment=COMPOSE_PROFILES=qwen25-coder,qwen3-4b
+```
+
+### Other endpoints
 
 Use the LAN profile when the existing Docker `llama-server` is bound to
 `10.0.0.151:7474`:
@@ -189,28 +252,40 @@ llama-server \
   -ngl 99 \
   --n-cpu-moe 999 \
   --flash-attn on
+
+.venv/bin/ensemble health --profile qwen3.6-35b-a3b.local
 ```
 
 Hardware caveat: Qwen3.6-35B-A3B is the reasoning lane, but it should be run
 deliberately on an RTX 3060 Ti. Keep context controlled, use llama.cpp
-MoE/offload settings, and prefer the 4B profile for coding/tool-heavy loops.
+MoE/offload settings, and prefer the 4B or Coder 7B lanes for
+coding/tool-heavy loops.
 
 ## Support Mechanics
 
-Ensemble keeps support primitives for external coding tools:
+Ensemble keeps support primitives for external coding tools. Each item is
+marked with its current status; "planned" items have no code yet.
 
-- Write/Edit separation: `Write` refuses to overwrite existing files; existing
-  files must go through `Edit`.
-- Thinking budget: keep local-model reasoning bounded and force implementation.
-- Dynamic skill injection: inject compact tool/protocol cards only when needed.
-- Workspace discovery: read local README/docs/instructions before editing.
-- Malformed output repair: detect bad tool-call formatting and repair before
-  restarting a turn.
-- Quality monitor: catch empty replies, fake tools, and repeated loops.
-- Checkpointing: snapshot files before any edit-capable flow.
-- Retry with failing tests: second attempt sees the failure output.
+- Write/Edit separation (library only): `ensemble.tool_modes.plan_write`
+  refuses to overwrite existing files, and `plan_edit` requires an existing
+  file with a checkpoint. Not exposed through the CLI.
+- Thinking budget (planned): keep local-model reasoning bounded and force
+  implementation.
+- Dynamic skill injection (implemented): `ensemble ask` prepends matching
+  skill cards; `ensemble skills` previews them.
+- Workspace discovery (planned): read local README/docs/instructions before
+  editing.
+- Malformed output repair (detection only): `ensemble.quality.needs_repair`
+  flags empty replies and unparsed tool calls; nothing repairs them yet.
+- Quality monitor (implemented): `ensemble ask` appends a quality-monitor note
+  for empty replies and unparsed tool calls. Repeated-loop detection exists in
+  `ensemble.quality.inspect_response`, but `ask` does not feed it a tool
+  sequence.
+- Checkpointing (implemented): `ensemble checkpoint <path>` copies a workspace
+  file into `state/checkpoints/`.
+- Retry with failing tests (planned): second attempt sees the failure output.
 
-Useful local checks:
+Useful local checks (checkpoint paths are relative to `ENSEMBLE_WORKSPACE`):
 
 ```bash
 .venv/bin/ensemble skills "prepare a patch for the model abstraction"
@@ -252,9 +327,13 @@ Default v1 direction:
 - Test `codebase-memory-mcp` first because it is binary-based and local-only.
 - Test `code-review-graph` as a developer-side MCP sidecar for structural code
   intelligence and blast-radius queries.
-- Test `CodeGraphContext` second, likely in a Python 3.14 container if its
-  Python compatibility lags behind this project's Python 3.15 baseline.
+- Test `CodeGraphContext` second, in its own container or pipx environment if
+  its Python compatibility lags behind this project's Python 3.14 baseline.
 - Keep code intelligence as MCP-side capability, not baked into the core agent.
+
+Built in: `ensemble lsp`, `ensemble symbols index`, and `ensemble graph symbols`
+build LSP-backed symbol artifacts under `.ensemble/`. See
+`docs/repo-intelligence.md`.
 
 ## Code Intelligence: code-review-graph
 
@@ -265,15 +344,15 @@ MCP sidecar. It builds a local structural graph of the repo under
 Install it outside the Ensemble app venv:
 
 ```bash
-python3.15 -m pip install --user pipx
-python3.15 -m pipx ensurepath
+python3.14 -m pip install --user pipx
+python3.14 -m pipx ensurepath
 source ~/.bashrc
-pipx install --python /usr/bin/python3.14 code-review-graph
+pipx install --python python3.14 code-review-graph
 code-review-graph --help
 ```
 
-`code-review-graph` is installed with Python 3.14 because one transitive native
-dependency currently fails to build under Python 3.15.
+pipx keeps `code-review-graph` and its native dependencies out of the Ensemble
+`.venv`.
 
 Build the graph:
 
@@ -317,7 +396,10 @@ Use code-review-graph to inspect this Ensemble repo. Give me:
 
 v1 is deliberately conservative:
 
-- Reads are limited to `ENSEMBLE_WORKSPACE`.
+- Workspace reads (`files`, `read`, `checkpoint`, `ask --file`) are limited to
+  `ENSEMBLE_WORKSPACE`. The code-intelligence commands (`lsp`,
+  `symbols index`, `graph symbols`) read the paths they are given and are not
+  workspace-guarded.
 - Writes are disabled by default.
 - Shell execution is disabled by default.
 - The Docker model mount is read-only.
@@ -333,6 +415,14 @@ cp .env.example .env
 make bootstrap
 ```
 
+`make bootstrap` creates `.venv` with Python 3.14, installs `ensemble[dev]` in
+editable mode, and runs the unit tests.
+
+Run `ensemble` from the repository root. `profiles/`, `mcp/`, `skills/`, and
+`state/checkpoints/` are resolved relative to the current directory. From
+anywhere else, `ensemble profiles` prints nothing and every command fails with
+`Profile not found` while `ENSEMBLE_PROFILE` is set.
+
 The model is canonical at:
 
 ```text
@@ -340,8 +430,12 @@ The model is canonical at:
 /home/jarvis/projects/third-party/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf
 ```
 
+The multi-model stack also expects `qwen2.5-coder-7b-instruct-q4_k_m.gguf` and
+`Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf` in `models/` for the
+Compose profiles that use them.
+
 Docker mounts `models/` read-only at `/models`. Choose the active model with
-`ENSEMBLE_MODEL_PATH` and `ENSEMBLE_MODEL_ALIAS`, or use one of the env
+`ENSEMBLE_MODEL_PATH` and `ENSEMBLE_MODEL_ALIAS`, or use one of the `.conf`
 files under `docker/`.
 
 ## Milestone 1: Model Server
@@ -365,16 +459,16 @@ curl -fsS http://localhost:8888/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ensemble" \
   -d '{
-    "model": "qwen3.6-35b-a3b-ud-q4_k_xl",
+    "model": "qwen3-4b-instruct-2507-ud-q4_k_xl",
     "messages": [{"role": "user", "content": "Say hello from Ensemble."}],
     "temperature": 0.2
   }'
 ```
 
-For the default 4B lane, use:
+For the 35B lane (`docker/qwen3.6-35b.conf`), use:
 
 ```json
-"model": "qwen3-4b-instruct-2507-ud-q4_k_xl"
+"model": "qwen3.6-35b-a3b-ud-q4_k_xl"
 ```
 
 Stop the server:
@@ -385,25 +479,28 @@ docker compose down
 
 ## Milestone 2: Python Client
 
-Install the CLI in a Python 3.15 environment:
+`make bootstrap` (see Setup) installs the CLI into `.venv`. The manual
+equivalent, with Python 3.14:
 
 ```bash
-python -m pip install -e .
+python3.14 -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
+source .venv/bin/activate
 ```
 
 Check the endpoint:
 
 ```bash
 ensemble health
-ensemble health --profile qwen3-4b-local
-ensemble health --profile qwen3.6-35b-a3b.docker
+ensemble health --profile qwen3-4b
+ensemble health --profile reasoning
 ensemble health --profile qwen3.6-35b-a3b.local
 ensemble health --profile smoke.local
 ensemble models
 ```
 
-With `--profile`, `health` and `models` use that JSON profile’s `base_url` and
-`api_key_env` for the request (so `.env` `ENSEMBLE_LLM_BASE_URL` does not
+With `--profile`, `health`, `models`, `ask`, and `chat` use that JSON profile's
+`base_url`, model, and `api_key_env` (so `.env` `ENSEMBLE_LLM_BASE_URL` does not
 override the profile when you are probing a specific server).
 
 Ask one question:
@@ -482,6 +579,7 @@ boringly reliable.
   scripts/
   tests/
   docs/
+  tools/              # Code-intelligence sidecar notes
   systemd/
   models/             # GGUF weights (gitignored)
   state/              # Runtime checkpoints and evidence

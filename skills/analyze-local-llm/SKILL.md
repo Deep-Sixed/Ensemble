@@ -39,19 +39,31 @@ MoE models can outperform dense models at the same VRAM budget because active pa
 
 ## Hardware Collection
 
-Before recommending local LLM models, run:
+Before recommending local LLM models, run (from `skills/analyze-local-llm/`):
 
 ```bash
-./collect-linux-hardware.sh
+./collect/linux-hardware.sh
 ```
 
-The script writes a timestamped report to:
+The script writes a timestamped report (`.txt` and `.json`) to:
 
 ```
-./hardware-report/
+collect/hardware-report/
 ```
+
+and a recommendations summary to `recommend/output/`.
 
 Use that report as the input source for CPU, RAM, GPU, VRAM, storage, OS, and driver/runtime recommendations.
+
+To check a specific model against that report:
+
+```bash
+python3 fit/gguf-fit.py /path/to/model.gguf   # local GGUF file
+python3 fit/hf-fit.py Qwen/Qwen2.5-7B-Instruct  # remote HF repo, no download
+```
+
+Both read the latest `collect/hardware-report/linux-hardware-*.json` and save
+their verdicts to `recommend/output/`.
 
 ### Required Tools
 
