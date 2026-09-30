@@ -13,6 +13,11 @@ tooling are designed for local-model behavior instead of frontier-model behavior
 
 ## Milestones
 
+Status: 1A and 1C are implemented. 1B and 1D are implemented as library
+primitives (`tool_modes.py`, `checkpoints.py`) but are not yet exposed as agent
+tools. 1E is partial: `quality.py` detects problems, but automatic repair and
+retry with failing tests are not implemented.
+
 ### 1A: Model Profiles
 
 - Target profile: Qwen3.6-35B-A3B through llama.cpp.
