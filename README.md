@@ -90,13 +90,8 @@ export ENSEMBLE_CONTEXT_TOKEN_BUDGET=12000
 export ENSEMBLE_MAX_FILE_BYTES=200000
 ```
 
-Optional diagnostic downstream client:
-
-```bash
-export ENSEMBLE_BASE_URL=http://127.0.0.1:8090/v1
-export ENSEMBLE_MODEL=auto
-export ENSEMBLE_API_KEY=ensemble
-```
+Settings can also live in a `.env` file (current directory first, then the
+Ensemble checkout); values already exported in the shell win.
 
 ## Other CLI commands
 
@@ -113,13 +108,10 @@ ensemble lsp symbols src/example.py
 
 ensemble symbols src --out .ensemble/symbols.jsonl
 ensemble graph .ensemble/symbols.jsonl --out .ensemble/symbol-graph.jsonl
-
-# Diagnostic only:
-ensemble health
-ensemble models
-ensemble ask "Summarize this repository"
-ensemble chat
 ```
+
+Ensemble does not call models. Pipe the packet to whichever agent or client
+does inference (Pi, Claude Code, Codex, Cursor, ...).
 
 ## Development
 

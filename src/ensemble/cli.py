@@ -5,7 +5,6 @@ import asyncio
 import json
 import sys
 
-from ensemble.client import EnsembleClient
 from ensemble.config import load_config
 from ensemble.safety import SafetyError, WorkspaceGuard
 from ensemble.tools.filesystem import list_files, read_file
@@ -16,7 +15,6 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     config = load_config(args.env_file)
     guard = WorkspaceGuard(config.workspace, allow_writes=False, allow_shell=False)
-    client = EnsembleClient(config)
 
     try:
         if args.command == "context":
@@ -45,15 +43,6 @@ def main(argv: list[str] | None = None) -> int:
                     )
                 )
             print(json.dumps(packet.to_dict(), indent=2))
-            return 0
-
-        if args.command == "health":
-            ok, message = client.health()
-            print(("OK: " if ok else "FAIL: ") + message)
-            return 0 if ok else 1
-
-        if args.command == "models":
-            print(json.dumps(client.models(), indent=2))
             return 0
 
         if args.command == "files":
@@ -97,16 +86,6 @@ def main(argv: list[str] | None = None) -> int:
             _run_graph_action(guard, args.path, args.out)
             return 0
 
-        if args.command == "ask":
-            context = None
-            if args.file:
-                context = read_file(guard, args.file, max_bytes=config.max_file_bytes)
-            print(client.ask(args.prompt, context=context))
-            return 0
-
-        if args.command == "chat":
-            return run_chat(client)
-
         parser.print_help()
         return 1
     except SafetyError as exc:
@@ -135,9 +114,6 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Skip LSP/symbol enrichment and use workspace/Git context only",
     )
-
-    sub.add_parser("health", help="Check the configured downstream endpoint")
-    sub.add_parser("models", help="Print the endpoint's /v1/models response")
 
     files = sub.add_parser("files", help="List workspace files read-only")
     files.add_argument("path", nargs="?", default=".")
@@ -171,11 +147,6 @@ def build_parser() -> argparse.ArgumentParser:
     graph.add_argument("path")
     graph.add_argument("--out", default=".ensemble/symbol-graph.jsonl")
 
-    ask_parser = sub.add_parser("ask", help="Diagnostic request to the downstream endpoint")
-    ask_parser.add_argument("prompt")
-    ask_parser.add_argument("--file", help="Include one workspace file as context")
-
-    sub.add_parser("chat", help="Diagnostic prompt loop")
     return parser
 
 
@@ -238,16 +209,6 @@ def _run_graph_action(guard: WorkspaceGuard, path: str, out: str) -> None:
     output = guard.resolve_derived_path(out)
     count = write_symbol_graph(source, output)
     print(f"wrote {count} graph fact(s) -> {output}")
-
-
-def run_chat(client: EnsembleClient) -> int:
-    print("Ensemble diagnostic chat. Type /quit to exit.")
-    while True:
-        prompt = input("> ").strip()
-        if prompt in {"/q", "/quit", "exit"}:
-            return 0
-        if prompt:
-            print(client.ask(prompt))
 
 
 if __name__ == "__main__":

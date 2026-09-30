@@ -6,31 +6,29 @@ from pathlib import Path
 
 from ensemble.paths import default_workspace
 
-try:
-    from dotenv import load_dotenv
-except ModuleNotFoundError:
-    def load_dotenv(*_args: object, **_kwargs: object) -> bool:
-        return False
-
 
 @dataclass(frozen=True)
 class EnsembleConfig:
-    base_url: str
-    model: str
-    api_key: str
     workspace: Path
     max_file_bytes: int
     checkpoint_dir: Path
     context_token_budget: int
 
 
+# Checkout root for editable installs (src/ensemble/config.py -> repo root).
+_SOURCE_ROOT = Path(__file__).resolve().parents[2]
+
+
 def load_config(env_file: str | Path | None = None) -> EnsembleConfig:
-    load_dotenv(env_file) if env_file is not None else load_dotenv()
+    if env_file is not None:
+        load_env_file(env_file)
+    else:
+        # Current directory first, then the Ensemble checkout; neither overrides
+        # variables that are already set in the environment.
+        load_env_file(Path.cwd() / ".env")
+        load_env_file(_SOURCE_ROOT / ".env")
 
     return EnsembleConfig(
-        base_url=os.getenv("ENSEMBLE_BASE_URL", "http://127.0.0.1:8090/v1").rstrip("/"),
-        model=os.getenv("ENSEMBLE_MODEL", "auto"),
-        api_key=os.getenv("ENSEMBLE_API_KEY", "ensemble"),
         workspace=default_workspace(),
         max_file_bytes=int(os.getenv("ENSEMBLE_MAX_FILE_BYTES", "200000")),
         checkpoint_dir=Path(
@@ -38,3 +36,29 @@ def load_config(env_file: str | Path | None = None) -> EnsembleConfig:
         ).expanduser(),
         context_token_budget=int(os.getenv("ENSEMBLE_CONTEXT_TOKEN_BUDGET", "12000")),
     )
+
+
+def load_env_file(path: str | Path) -> bool:
+    """Load simple KEY=VALUE lines without overriding variables already set.
+
+    Replaces the python-dotenv dependency for the handful of ENSEMBLE_* settings.
+    """
+    env_path = Path(path).expanduser()
+    if not env_path.is_file():
+        return False
+
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :].lstrip()
+        key, sep, value = line.partition("=")
+        key = key.strip()
+        if not sep or not key:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        os.environ.setdefault(key, value)
+    return True
