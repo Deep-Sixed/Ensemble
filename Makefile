@@ -2,13 +2,12 @@
 
 PYTHON := $(if $(wildcard .venv/bin/python),.venv/bin/python,python3.14)
 
-# Run unit tests (no live LLM or Docker required).
 test:
 	$(PYTHON) -m pytest tests/ -q
 
-# Create .venv and install editable package with dev extras.
 bootstrap:
-	./scripts/bootstrap_dev.sh
+	$(PYTHON) -m venv .venv
+	.venv/bin/python -m pip install -e '.[dev]'
 
 help:
 	@echo "Targets:"
