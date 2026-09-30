@@ -13,7 +13,7 @@
     <div style="display: contents">
       <script>
         {
-          const localFirstDefaultModel = "qwen2.5-coder-7b-instruct-q4_k_m";
+          const ensembleDefaultModel = "qwen2.5-coder-7b-instruct-q4_k_m";
           const nativeFetch = window.fetch.bind(window);
 
           function normalizeModelUrl(input) {
@@ -23,7 +23,7 @@
 
             const url = new URL(input, window.location.href);
             if (url.searchParams.get("model") === "default") {
-              url.searchParams.set("model", localFirstDefaultModel);
+              url.searchParams.set("model", ensembleDefaultModel);
               return url.pathname + url.search + url.hash;
             }
 
@@ -42,7 +42,7 @@
                   ...init,
                   body: JSON.stringify({
                     ...payload,
-                    model: localFirstDefaultModel
+                    model: ensembleDefaultModel
                   })
                 };
               }

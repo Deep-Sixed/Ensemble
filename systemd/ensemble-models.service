@@ -1,4 +1,5 @@
-# Copy to /etc/systemd/system/ensemble-models.service
+# Set WorkingDirectory to your Ensemble checkout, then copy to
+# /etc/systemd/system/ensemble-models.service
 # Then: sudo systemctl daemon-reload && sudo systemctl enable --now ensemble-models.service
 
 [Unit]
@@ -10,7 +11,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-WorkingDirectory=/home/jarvis/projects/third-party/ensemble
+WorkingDirectory=/path/to/ensemble
 ExecStart=/usr/bin/docker compose -f docker-compose.models.yml up -d
 ExecStop=/usr/bin/docker compose -f docker-compose.models.yml down
 TimeoutStartSec=120

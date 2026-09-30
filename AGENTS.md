@@ -30,9 +30,9 @@ ensemble/
 
 | Variable | Default |
 |----------|---------|
-| `ENSEMBLE_ROOT` | Repo checkout (inferred by `ensemble.paths.repo_root()`) |
+| `ENSEMBLE_ROOT` | Repo checkout (inferred by `ensemble.paths.repo_root()`), else current directory |
 | `ENSEMBLE_HOST_MODEL_DIR` | `$ENSEMBLE_ROOT/models` |
-| `ENSEMBLE_WORKSPACE` | Set in `.env` — the project Ensemble reads, outside this repo |
+| `ENSEMBLE_WORKSPACE` | Current directory; set in `.env` to the project Ensemble reads, outside this repo |
 
 Never hardcode absolute host paths. Use env vars or `ensemble.paths.repo_root()`.
 

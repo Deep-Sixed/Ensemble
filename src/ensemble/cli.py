@@ -126,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ensemble",
-        description="Local-first coding-agent lab with safe workspace boundaries.",
+        description="Local coding-agent lab with safe workspace boundaries.",
     )
     parser.add_argument("--env-file", help="Optional .env file to load")
     sub = parser.add_subparsers(dest="command")

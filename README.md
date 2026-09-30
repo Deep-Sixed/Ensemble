@@ -8,8 +8,8 @@ It runs a GGUF model through an OpenAI-compatible llama.cpp server, connects
 through simple inspection utilities, and exposes local context to external
 agent/coding tools.
 
-Ensemble uses Qwen GGUF models through llama.cpp. On the current RTX 3060 Ti
-machine, the default lane is `qwen3-4b-instruct-2507-ud-q4_k_xl` for daily coding
+Ensemble uses Qwen GGUF models through llama.cpp. On the reference RTX 3060 Ti
+(8 GB) host, the default lane is `qwen3-4b-instruct-2507-ud-q4_k_xl` for daily coding
 and low-latency tool use. The larger `qwen3.6-35b-a3b-ud-q4_k_xl` model remains
 available as an explicit reasoning/offload lane, but it should not be the
 default on this VRAM budget.
@@ -421,8 +421,9 @@ ensemble chat --classic
 
 ## Milestone 3: Read-Only Repo Context
 
-The workspace is set by `ENSEMBLE_WORKSPACE` in `.env`. Point it at the
-project you want Ensemble to read, and keep it outside Ensemble itself:
+The workspace is set by `ENSEMBLE_WORKSPACE` in `.env` and defaults to the
+current directory. Point it at the project you want Ensemble to read, and
+keep it outside Ensemble itself:
 
 ```text
 ENSEMBLE_WORKSPACE=/path/to/your/project

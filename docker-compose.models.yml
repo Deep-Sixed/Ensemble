@@ -18,7 +18,7 @@ services:
       - "6"
       - --no-webui
     volumes:
-      - ${ENSEMBLE_HOST_MODEL_DIR:-/home/jarvis/projects/third-party/ensemble/models}:/models:ro
+      - ${ENSEMBLE_HOST_MODEL_DIR:-./models}:/models:ro
     networks: [ensemble-net]
     restart: unless-stopped
 
@@ -41,7 +41,7 @@ services:
       - "6"
       - --no-webui
     volumes:
-      - ${ENSEMBLE_HOST_MODEL_DIR:-/home/jarvis/projects/third-party/ensemble/models}:/models:ro
+      - ${ENSEMBLE_HOST_MODEL_DIR:-./models}:/models:ro
     networks: [ensemble-net]
     restart: unless-stopped
 
@@ -62,7 +62,7 @@ services:
       - "8192"
       - --no-webui
     volumes:
-      - ${ENSEMBLE_HOST_MODEL_DIR:-/home/jarvis/projects/third-party/ensemble/models}:/models:ro
+      - ${ENSEMBLE_HOST_MODEL_DIR:-./models}:/models:ro
     networks: [ensemble-net]
     restart: unless-stopped
 
@@ -85,7 +85,7 @@ services:
       - "6"
       - --no-webui
     volumes:
-      - ${ENSEMBLE_HOST_MODEL_DIR:-/home/jarvis/projects/third-party/ensemble/models}:/models:ro
+      - ${ENSEMBLE_HOST_MODEL_DIR:-./models}:/models:ro
     networks: [ensemble-net]
     restart: unless-stopped
 
