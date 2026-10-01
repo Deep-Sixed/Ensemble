@@ -1,4 +1,5 @@
 # Copy to /etc/systemd/system/ensemble-models.service
+# Edit the --profile flags below to choose which model backends start.
 # Then: sudo systemctl daemon-reload && sudo systemctl enable --now ensemble-models.service
 
 [Unit]
@@ -11,8 +12,8 @@ Wants=network-online.target
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/home/jarvis/projects/third-party/ensemble
-ExecStart=/usr/bin/docker compose -f docker-compose.models.yml up -d
-ExecStop=/usr/bin/docker compose -f docker-compose.models.yml down
+ExecStart=/usr/bin/docker compose -f docker-compose.models.yml --profile qwen25-coder --profile qwen3-4b up -d
+ExecStop=/usr/bin/docker compose -f docker-compose.models.yml --profile "*" down
 TimeoutStartSec=120
 TimeoutStopSec=120
 
