@@ -200,3 +200,78 @@ def test_default_workspace_is_cwd_not_a_host_path(tmp_path: Path, monkeypatch: p
     assert default_workspace() == tmp_path.resolve()
     monkeypatch.setenv("ENSEMBLE_WORKSPACE", str(tmp_path / "other"))
     assert default_workspace() == tmp_path / "other"
+
+
+# --- P3 items ---
+
+
+def test_parse_stream_separates_parallel_calls_without_index() -> None:
+    from ensemble.llm import parse_stream
+
+    def chunk(**call):
+        return "data: " + json.dumps({"choices": [{"delta": {"tool_calls": [call]}}]})
+
+    lines = [
+        chunk(id="a", function={"name": "read", "arguments": '{"path":'}),
+        chunk(function={"arguments": ' "x"}'}),
+        chunk(id="b", function={"name": "read", "arguments": '{"path": "y"}'}),
+        "data: [DONE]",
+    ]
+    calls = parse_stream(lines).tool_calls
+    assert [(c.id, c.arguments) for c in calls] == [("a", '{"path": "x"}'), ("b", '{"path": "y"}')]
+
+
+def test_chat_client_accepts_non_streaming_json_response(tmp_path: Path) -> None:
+    from ensemble.llm import ChatClient
+    from test_harness import make_config
+
+    body = {"choices": [{"finish_reason": "tool_calls", "message": {
+        "content": "hi", "tool_calls": [{"id": "t1", "function": {"name": "read", "arguments": {"path": "f"}}}]}}]}
+
+    class JsonResponse:
+        status_code = 200
+        headers = {"Content-Type": "application/json"}
+        text = ""
+
+        def json(self):
+            return body
+
+        def close(self) -> None:
+            pass
+
+    seen: list[str] = []
+    client = ChatClient(make_config(tmp_path), post=lambda url, **kw: JsonResponse())
+    turn = client.complete([], on_text=seen.append)
+    assert turn.content == "hi" and seen == ["hi"]
+    assert [(c.id, c.name, c.arguments) for c in turn.tool_calls] == [("t1", "read", '{"path": "f"}')]
+
+
+def test_read_streams_large_files_and_keeps_hints(tmp_path: Path) -> None:
+    (tmp_path / "big.txt").write_text("".join(f"line{i}\n" for i in range(200_000)))
+    read = tools(tmp_path)["read"]
+    out = read.run({"path": "big.txt", "offset": 10, "limit": 3})
+    assert out.startswith("line9\nline10\nline11\n") and "offset=13" in out and "199988 more" in out
+    assert "offset=2001" in read.run({"path": "big.txt"})
+    with pytest.raises(Exception, match="beyond end"):
+        read.run({"path": "big.txt", "offset": 300_000})
+
+
+def test_read_refuses_binary_and_handles_empty(tmp_path: Path) -> None:
+    (tmp_path / "b.bin").write_bytes(b"\x00\x01\x02")
+    (tmp_path / "e.txt").write_text("")
+    read = tools(tmp_path)["read"]
+    with pytest.raises(Exception, match="Binary"):
+        read.run({"path": "b.bin"})
+    assert read.run({"path": "e.txt"}) == "(empty file)"
+
+
+def test_skill_cards_come_from_ensemble_not_the_workspace(tmp_path: Path) -> None:
+    from ensemble.harness import Agent
+    from ensemble.llm import AssistantTurn
+    from test_harness import ScriptedClient, make_config
+
+    (tmp_path / "skills").mkdir()
+    (tmp_path / "skills" / "ensemble.md").write_text("INJECTED BY WORKSPACE")
+    client = ScriptedClient(AssistantTurn(content="ok"))
+    Agent(make_config(tmp_path), client=client).run("hello")
+    assert "INJECTED BY WORKSPACE" not in json.dumps(client.requests[0])

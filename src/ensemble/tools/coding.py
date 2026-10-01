@@ -91,6 +91,36 @@ def truncate_tail(text: str) -> tuple[str, bool]:
     return out, clipped
 
 
+def _read_window(
+    path: Path, offset: int, limit: int | None
+) -> tuple[list[str], int, int, bool]:
+    """Stream a file once: keep only the requested window, still count every line.
+
+    Returns (kept lines, total lines, window length, whether kept lines were capped).
+    Memory stays bounded by the output limits however large the file is.
+    """
+    with path.open("rb") as probe:
+        if b"\0" in probe.read(8192):
+            raise ToolError("Binary file; refusing to read it as text")
+    kept: list[str] = []
+    kept_bytes = 0
+    total = window_len = 0
+    overflow = False
+    with path.open(encoding="utf-8", errors="replace") as handle:
+        for total, line in enumerate(handle, 1):
+            if total < offset or (limit is not None and total >= offset + limit):
+                continue
+            window_len += 1
+            if overflow:
+                continue
+            kept_bytes += len(line.encode("utf-8"))
+            if len(kept) >= MAX_OUTPUT_LINES + 1 or kept_bytes > MAX_OUTPUT_BYTES * 2:
+                overflow = True
+                continue
+            kept.append(line)
+    return kept, total, window_len, overflow
+
+
 def read_tool(guard: WorkspaceGuard) -> Tool:
     def run(args: dict[str, Any]) -> str:
         path = guard.resolve_read_path(_str_arg(args, "path"))
@@ -100,12 +130,12 @@ def read_tool(guard: WorkspaceGuard) -> Tool:
         limit = _int_arg(args, "limit")
         if offset < 1 or (limit is not None and limit < 1):
             raise ToolError("'offset' and 'limit' must be positive")
-        lines = path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
-        total = len(lines)
+        window, total, window_len, overflow = _read_window(path, offset, limit)
         if offset > max(total, 1):
             raise ToolError(f"offset {offset} is beyond end of file ({total} lines)")
-        end = total if limit is None else min(total, offset - 1 + limit)
-        text, clipped = truncate_head("".join(lines[offset - 1 : end]))
+        end = offset - 1 + window_len
+        text, clipped = truncate_head("".join(window))
+        clipped = clipped or overflow
         shown = len(text.splitlines())
         if clipped:
             next_offset = offset + shown

@@ -8,6 +8,7 @@ from typing import Any
 
 from ensemble.config import EnsembleConfig
 from ensemble.llm import ChatClient, LLMError, TextCallback
+from ensemble.paths import repo_root
 from ensemble.quality import inspect_response
 from ensemble.safety import SafetyError, WorkspaceGuard
 from ensemble.session import Session
@@ -94,6 +95,7 @@ class Agent:
         on_text: TextCallback | None = None,
         on_event: EventCallback | None = None,
         checkpoint_root: Path | None = None,
+        skill_root: Path | None = None,
     ) -> None:
         self.guard = WorkspaceGuard(
             config.workspace,
@@ -109,7 +111,9 @@ class Agent:
         self._max_history_chars = max_history_chars
         self._on_text = on_text
         self._on_event = on_event
-        self._skill_root = self.guard.root / "skills"
+        # Ensemble's own skill cards, never the workspace's: an untrusted repo's
+        # markdown must not be injected into the prompt as if it were ours.
+        self._skill_root = skill_root if skill_root is not None else repo_root() / "skills"
         self._sequence: list[str] = []
         self.messages: list[dict[str, Any]] = list(messages or [])
         self._system = {
