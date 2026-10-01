@@ -26,6 +26,10 @@ ensemble = "ensemble.cli:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/ensemble"]
 
+# Ship the skill cards with the package; see ensemble.skills.default_skill_root().
+[tool.hatch.build.targets.wheel.force-include]
+"skills" = "ensemble/_skills"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]

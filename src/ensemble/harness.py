@@ -8,11 +8,10 @@ from typing import Any
 
 from ensemble.config import EnsembleConfig
 from ensemble.llm import ChatClient, LLMError, TextCallback
-from ensemble.paths import repo_root
 from ensemble.quality import inspect_response
 from ensemble.safety import SafetyError, WorkspaceGuard
 from ensemble.session import Session
-from ensemble.skills import inject_skill_cards
+from ensemble.skills import default_skill_root, inject_skill_cards
 from ensemble.tools.coding import Tool, ToolError, coding_tools
 
 EventCallback = Callable[[str, dict[str, Any]], None]
@@ -113,7 +112,7 @@ class Agent:
         self._on_event = on_event
         # Ensemble's own skill cards, never the workspace's: an untrusted repo's
         # markdown must not be injected into the prompt as if it were ours.
-        self._skill_root = skill_root if skill_root is not None else repo_root() / "skills"
+        self._skill_root = skill_root if skill_root is not None else default_skill_root()
         self._sequence: list[str] = []
         self.messages: list[dict[str, Any]] = list(messages or [])
         self._system = {

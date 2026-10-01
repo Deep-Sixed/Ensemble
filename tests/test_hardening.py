@@ -275,3 +275,34 @@ def test_skill_cards_come_from_ensemble_not_the_workspace(tmp_path: Path) -> Non
     client = ScriptedClient(AssistantTurn(content="ok"))
     Agent(make_config(tmp_path), client=client).run("hello")
     assert "INJECTED BY WORKSPACE" not in json.dumps(client.requests[0])
+
+
+# --- packaged skill cards ---
+
+
+def test_default_skill_root_prefers_packaged_copy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import ensemble.skills as skills
+
+    fake_pkg = tmp_path / "site" / "ensemble"
+    (fake_pkg / "_skills").mkdir(parents=True)
+    monkeypatch.setattr(skills, "__file__", str(fake_pkg / "skills.py"))
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "skills").mkdir()  # a project's own folder must not win
+    assert skills.default_skill_root() == fake_pkg / "_skills"
+
+
+def test_default_skill_root_ignores_cwd_in_a_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import ensemble.skills as skills
+
+    monkeypatch.delenv("ENSEMBLE_ROOT", raising=False)
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "skills").mkdir()
+    root = skills.default_skill_root()
+    assert root != tmp_path / "skills" and root.name == "skills"
+
+
+def test_skills_preview_works_outside_the_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from ensemble.skills import inject_skill_cards
+
+    monkeypatch.chdir(tmp_path)
+    assert "[ensemble-technical]" in inject_skill_cards("fix a bug")
