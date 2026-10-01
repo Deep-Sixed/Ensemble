@@ -1,23 +1,20 @@
 from __future__ import annotations
 
-from langchain_core.messages import HumanMessage, SystemMessage
-
 from ensemble.config import EnsembleConfig
-from ensemble.model import build_chat_model
+from ensemble.llm import ChatClient
 from ensemble.quality import inspect_response
 from ensemble.skills import inject_skill_cards
 
 
 SYSTEM_PROMPT = """You are Ensemble, a lean local AI development substrate.
 You help inspect local profiles, MCP config, skills, and selected repositories.
-In v1, you are not a replacement agent framework: writes and shell execution are
-out of scope unless explicitly enabled by the operator. Prefer concise answers,
-cite file paths when context is provided, and propose patches instead of editing.
+This one-shot mode has no tools: propose patches as text instead of editing.
+Prefer concise answers and cite file paths when context is provided.
 """
 
 
 def ask(config: EnsembleConfig, prompt: str, context: str | None = None) -> str:
-    model = build_chat_model(config)
+    """One-shot question without tools. Use `ensemble agent` for the coding harness."""
     skills = inject_skill_cards(prompt)
     parts = []
     if skills:
@@ -25,14 +22,13 @@ def ask(config: EnsembleConfig, prompt: str, context: str | None = None) -> str:
     if context is not None:
         parts.append(f"Context:\n{context}")
     parts.append(f"Question:\n{prompt}")
-    content = "\n\n".join(parts)
-    response = model.invoke(
+    turn = ChatClient(config).complete(
         [
-            SystemMessage(content=SYSTEM_PROMPT),
-            HumanMessage(content=content),
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": "\n\n".join(parts)},
         ]
     )
-    text = str(response.content)
+    text = turn.content
     findings = inspect_response(text)
     if findings:
         notes = "\n".join(f"- {finding.code}: {finding.message}" for finding in findings)

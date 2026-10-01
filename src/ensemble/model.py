@@ -1,19 +1,8 @@
 from __future__ import annotations
 
 import requests
-from langchain_openai import ChatOpenAI
 
 from ensemble.config import EnsembleConfig
-
-
-def build_chat_model(config: EnsembleConfig) -> ChatOpenAI:
-    return ChatOpenAI(
-        model=config.llm_model,
-        base_url=config.llm_base_url,
-        api_key=config.api_key,
-        temperature=config.temperature,
-        max_tokens=config.max_tokens,
-    )
 
 
 def models_url(config: EnsembleConfig) -> str:
