@@ -18,7 +18,7 @@ from typing import Any
 from ensemble.checkpoints import create_checkpoint
 from ensemble.safety import SafetyError, WorkspaceGuard
 from ensemble.tools.filesystem import list_files
-from ensemble.tool_modes import plan_edit, plan_write
+from ensemble.tool_modes import plan_write
 
 MAX_OUTPUT_LINES = 2000
 MAX_OUTPUT_BYTES = 50 * 1024
@@ -172,8 +172,9 @@ def edit_tool(guard: WorkspaceGuard, checkpoint_root: Path) -> Tool:
             raise ToolError("old_text not found. It must match the file exactly, incl. whitespace.")
         if count > 1:
             raise ToolError(f"old_text matches {count} places. Include more surrounding lines.")
-        create_checkpoint(guard, relative, checkpoint_root)
-        plan_edit(guard, relative, checkpoint_root)
+        checkpoint = create_checkpoint(guard, relative, checkpoint_root)
+        if not checkpoint.snapshot.is_file():
+            raise SafetyError("Edit requires a checkpoint before modification.")
         updated = original.replace(old, new, 1)
         target.write_bytes(updated.encode("utf-8"))
         diff = "".join(

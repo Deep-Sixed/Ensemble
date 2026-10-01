@@ -32,7 +32,7 @@ Ensemble is a JARVIS local AI substrate. It is **not** Nexus, but it follows the
 |----------|---------|
 | `ENSEMBLE_ROOT` | `/home/jarvis/projects/third-party/ensemble` |
 | `ENSEMBLE_HOST_MODEL_DIR` | `$ENSEMBLE_ROOT/models` |
-| `ENSEMBLE_WORKSPACE` | `/home/jarvis/projects/nexus` |
+| `ENSEMBLE_WORKSPACE` | current directory (set explicitly for a fixed project) |
 
 Never hardcode alternate paths (`/home/jarvis/ensemble`, `/home/jarvis/projects/ensemble`). Use env vars or `ensemble.paths.repo_root()`.
 

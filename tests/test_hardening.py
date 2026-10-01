@@ -121,3 +121,82 @@ def test_session_drops_tool_calls_without_results(tmp_path: Path) -> None:
     loaded = session.load()
     assert [m["role"] for m in loaded] == ["user", "assistant", "tool", "user"]
     assert json.dumps(loaded).count('"id": "b"') == 0
+
+
+# --- findings 7-10 ---
+
+
+def test_fit_history_elides_old_tool_output_but_not_stored_history() -> None:
+    from ensemble.harness import fit_history
+
+    history = [
+        {"role": "user", "content": "one"},
+        {"role": "assistant", "content": "", "tool_calls": [{"id": "a", "type": "function", "function": {"name": "read", "arguments": "{}"}}]},
+        {"role": "tool", "tool_call_id": "a", "content": "x" * 5000},
+        {"role": "user", "content": "two"},
+    ]
+    fitted = fit_history(history, 1000)
+    assert "elided" in fitted[2]["content"] and fitted[-1]["content"] == "two"
+    assert history[2]["content"] == "x" * 5000
+
+
+def test_fit_history_drops_whole_turns_and_keeps_latest_prompt() -> None:
+    from ensemble.harness import fit_history
+
+    history = []
+    for i in range(10):
+        history += [{"role": "user", "content": f"q{i}" + "y" * 500}, {"role": "assistant", "content": "a" * 500}]
+    history.append({"role": "user", "content": "latest"})
+    fitted = fit_history(history, 1500)
+    assert fitted[0]["role"] == "user" and fitted[-1]["content"] == "latest"
+    assert len(fitted) < len(history)
+
+
+def test_fit_history_passes_small_history_through() -> None:
+    from ensemble.harness import fit_history
+
+    history = [{"role": "user", "content": "hi"}]
+    assert fit_history(history, 10_000) == history
+
+
+def test_checkpoint_names_do_not_collide_or_glob(tmp_path: Path) -> None:
+    from ensemble.checkpoints import create_checkpoint, has_checkpoint
+
+    guard = WorkspaceGuard(tmp_path)
+    for name in ("a/b.py", "a__b.py", "x[1].py"):
+        (tmp_path / name).parent.mkdir(exist_ok=True)
+        (tmp_path / name).write_text(name)
+    root = tmp_path / "cp"
+    create_checkpoint(guard, "a/b.py", root)
+    assert has_checkpoint(guard, "a/b.py", root)
+    assert not has_checkpoint(guard, "a__b.py", root)
+    assert not has_checkpoint(guard, "x[1].py", root)
+    create_checkpoint(guard, "x[1].py", root)
+    assert has_checkpoint(guard, "x[1].py", root)
+
+
+def test_loop_detector_resets_between_prompts(tmp_path: Path) -> None:
+    from ensemble.harness import Agent
+    from ensemble.llm import AssistantTurn, ToolCall
+    from test_harness import ScriptedClient, make_config
+
+    (tmp_path / "f.txt").write_text("x")
+
+    def turns() -> list[AssistantTurn]:
+        calls = [AssistantTurn(tool_calls=[ToolCall(f"c{i}", "read", '{"path": "f.txt"}')]) for i in range(3)]
+        return calls + [AssistantTurn(content="done")]
+
+    client = ScriptedClient(*turns(), *turns())
+    agent = Agent(make_config(tmp_path), client=client)
+    assert agent.run("first") == "done"
+    assert agent.run("second") == "done"  # was stopped as a "loop" by the first prompt's calls
+
+
+def test_default_workspace_is_cwd_not_a_host_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from ensemble.paths import default_workspace
+
+    monkeypatch.delenv("ENSEMBLE_WORKSPACE", raising=False)
+    monkeypatch.chdir(tmp_path)
+    assert default_workspace() == tmp_path.resolve()
+    monkeypatch.setenv("ENSEMBLE_WORKSPACE", str(tmp_path / "other"))
+    assert default_workspace() == tmp_path / "other"
