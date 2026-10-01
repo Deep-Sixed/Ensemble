@@ -383,6 +383,19 @@ Stop the server:
 docker compose down
 ```
 
+### Multi-model stack
+
+Each backend in `docker-compose.models.yml` is opt-in via a Compose profile;
+the router (port 8090) starts without any. Select the backends to run:
+
+```bash
+docker compose -f docker-compose.models.yml --profile qwen25-coder --profile qwen3-4b up -d
+docker compose -f docker-compose.models.yml --profile "*" down
+```
+
+`systemd/ensemble-models.service` starts `qwen25-coder` and `qwen3-4b`; edit its
+`--profile` flags to change that.
+
 ## Milestone 2: Python Client
 
 Install the CLI in a Python 3.15 environment:
