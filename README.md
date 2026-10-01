@@ -530,9 +530,8 @@ boringly reliable.
 
 ## License
 
-This repository is currently unlicensed (`UNLICENSED` in
-`ensemble-vscode/package.json`) and intended for private/local use. Agent and
-contributor conventions live in `AGENTS.md`.
+Released under the MIT License; see `LICENSE`. Agent and contributor
+conventions live in `AGENTS.md`.
 
 ## Project Layout
 
