@@ -101,6 +101,9 @@ def main(argv: list[str] | None = None) -> int:
             _run_graph_action(args.graph_action, args.path, args.out)
             return 0
 
+        if args.command == "agent":
+            return run_agent(config, args)
+
         if args.command == "ask":
             from ensemble.agent import ask
 
@@ -198,6 +201,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="JSONL output path",
     )
 
+    agent = sub.add_parser(
+        "agent",
+        help="Coding agent: read/write/edit/bash tools over the local model",
+    )
+    agent.add_argument(
+        "--profile",
+        type=_cli_profile_arg,
+        help="Use this profile's base_url and auth (overrides ENSEMBLE_LLM_* for this command)",
+    )
+    agent.add_argument("prompt", nargs="?", help="Run one prompt and exit (omit for interactive)")
+    agent.add_argument("-c", "--continue", dest="resume", action="store_true",
+                       help="Resume the latest session in this workspace")
+    agent.add_argument("--no-session", action="store_true", help="Do not save session history")
+    agent.add_argument("--max-turns", type=int, default=25, help="Max model turns per prompt")
+
     ask_parser = sub.add_parser("ask", help="Ask the local model one question")
     ask_parser.add_argument(
         "--profile",
@@ -279,6 +297,57 @@ def _run_graph_action(action: str, path: str, out: str) -> None:
 
     count = write_symbol_graph(path, out)
     print(f"wrote {count} graph fact(s) -> {out}")
+
+
+def run_agent(config, args: argparse.Namespace) -> int:
+    from ensemble.harness import Agent
+    from ensemble.llm import LLMError
+    from ensemble.session import Session
+
+    session = None
+    messages = None
+    if not args.no_session:
+        directory = config.workspace / ".ensemble" / "sessions"
+        session = (Session.latest(directory) if args.resume else None) or Session.new(directory)
+        messages = session.load()
+
+    def on_event(kind: str, payload: dict) -> None:
+        if kind == "tool_start":
+            print(f"\n[{payload['name']}] {json.dumps(payload['arguments'])[:200]}", file=sys.stderr)
+        elif kind == "warning":
+            print(f"\n[warning] {payload['message']}", file=sys.stderr)
+
+    agent = Agent(
+        config,
+        session=session,
+        messages=messages,
+        max_turns=args.max_turns,
+        on_text=lambda text: print(text, end="", flush=True),
+        on_event=on_event,
+    )
+    modes = [
+        f"writes={'on' if config.allow_writes else 'off'}",
+        f"shell={'on' if config.allow_shell else 'off'}",
+    ]
+    try:
+        if args.prompt:
+            agent.run(args.prompt)
+            print()
+            return 0
+        print(f"Ensemble agent ({config.llm_model}; {', '.join(modes)}). /quit to exit.")
+        while True:
+            try:
+                prompt = input("\n> ").strip()
+            except EOFError:
+                return 0
+            if prompt in {"/q", "/quit", "exit"}:
+                return 0
+            if prompt:
+                agent.run(prompt)
+                print()
+    except LLMError as exc:
+        print(f"\nModel error: {exc}", file=sys.stderr)
+        return 3
 
 
 def run_chat(config) -> int:

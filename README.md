@@ -15,9 +15,11 @@ is the fast/general lane (also the single-model Docker stack default on port 888
 The larger `qwen3.6-35b-a3b-ud-q4_k_xl` model remains available as an explicit
 reasoning/offload lane, but it should not be the default on this VRAM budget.
 
-The substrate is load-bearing. Ensemble is not positioned as "run a local
-model through a generic agent loop"; it is positioned as a local launchpad for
-Qwen-class coding workflows.
+Ensemble is a lightweight coding harness in the spirit of Pi's minimalist agent:
+a small tool-calling loop (`read`, `write`, `edit`, `bash`) over any
+OpenAI-compatible endpoint, with no agent framework dependency. What it adds for
+small local models: root-confined workspace tools, checkpoint-before-edit,
+operator-gated writes and shell, and on-demand skill cards.
 
 This is its own project. It is not a fork of Nexus or OpenMono. It
 borrows Nexus's working conventions: Python project layout, Docker
@@ -40,18 +42,18 @@ Ensemble should provide:
 - simple CLI commands (`ensemble --help` lists them all):
   - endpoint inspection: `health`, `models`, `profiles`, `mcp`
   - read-only workspace access: `files`, `read`
+  - coding agent: `agent` (print mode or interactive; see below)
   - model calls: `ask`, `chat`
   - support primitives: `skills`, `checkpoint`
   - code intelligence: `lsp`, `symbols index`, `graph symbols`
 
 Ensemble should avoid:
 
-- custom agent loop
-- custom planner
-- auto-edit system
+- a planner, sub-agents, or multi-agent orchestration
+- unattended auto-edit (writes and shell stay operator opt-in)
 - dashboard
 - complex memory engine
-- replacing Codex, Cursor, OpenCode, pi, or little-coder
+- growing past a small harness (no plugin system, no TUI framework)
 
 ## Stack V1
 
@@ -122,7 +124,7 @@ Ensemble has four inference lanes:
 - Reasoning/offload inference: llama.cpp plus Qwen3.6 35B-A3B GGUF.
 - Smoke inference: a tiny/small GGUF only for boot tests and endpoint wiring.
 
-The smoke model proves Docker, llama.cpp, LangChain, MCP, CLI health, and
+The smoke model proves Docker, llama.cpp, MCP, CLI health, and
 endpoint plumbing. The 7B coder is the default daily driver for an RTX 3060 Ti;
 Qwen3 4B is the lighter option and the default of the single-model stack.
 The 35B model is useful for harder reasoning, but it is larger than the card's
@@ -482,6 +484,33 @@ Start a simple loop:
 ```bash
 ensemble chat --classic
 ```
+
+### Coding agent
+
+```bash
+ensemble agent "Explain what src/ensemble/safety.py guards"   # print mode
+ensemble agent                                                # interactive
+ensemble agent -c                                             # resume last session
+ENSEMBLE_ALLOW_WRITES=true ensemble agent "Add a docstring to load_config"
+```
+
+Tools are advertised only when the operator enables them:
+
+| Tool | Enabled by | Behavior |
+|------|-----------|----------|
+| `read` | always | file (offset/limit, truncated) or directory listing |
+| `write` | `ENSEMBLE_ALLOW_WRITES=true` | creates new files only; refuses to overwrite |
+| `edit` | `ENSEMBLE_ALLOW_WRITES=true` | one exact unique replacement; snapshots the file to `.ensemble/checkpoints/` first |
+| `bash` | `ENSEMBLE_ALLOW_SHELL=true` | `bash -c` in the workspace, stdin closed, timeout, tail-truncated output |
+
+`read`, `write` and `edit` cannot leave `ENSEMBLE_WORKSPACE`. `bash` starts in
+the workspace but is **not** path-confined: enable it only inside the Docker
+sandbox or on a workspace you trust. Sessions are JSONL under
+`<workspace>/.ensemble/sessions/`. An `AGENTS.md` (or `CLAUDE.md`) in the
+workspace root is added to the system prompt, and matching skill cards are
+injected per prompt. The loop stops after `--max-turns` (default 25) or when it
+repeats the same tool calls. Models that print `<tool_call>` JSON as text instead
+of native tool calls are handled too.
 
 ## Milestone 3: Read-Only Repo Context
 
