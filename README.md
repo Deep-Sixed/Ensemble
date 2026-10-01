@@ -9,10 +9,11 @@ through simple inspection utilities, and exposes local context to external
 agent/coding tools.
 
 Ensemble uses Qwen GGUF models through llama.cpp. On the current RTX 3060 Ti
-machine, the default lane is `qwen3-4b-instruct-2507-ud-q4_k_xl` for daily coding
-and low-latency tool use. The larger `qwen3.6-35b-a3b-ud-q4_k_xl` model remains
-available as an explicit reasoning/offload lane, but it should not be the
-default on this VRAM budget.
+machine, the default lane is `qwen2.5-coder-7b-instruct-q4_k_m` for daily coding,
+served through the multi-model router on port 8090. `qwen3-4b-instruct-2507-ud-q4_k_xl`
+is the fast/general lane (also the single-model Docker stack default on port 8888).
+The larger `qwen3.6-35b-a3b-ud-q4_k_xl` model remains available as an explicit
+reasoning/offload lane, but it should not be the default on this VRAM budget.
 
 The substrate is load-bearing. Ensemble is not positioned as "run a local
 model through a generic agent loop"; it is positioned as a local launchpad for
@@ -36,8 +37,12 @@ Ensemble should provide:
 - MCP configuration
 - code-index sidecar configs
 - markdown skills
-- simple CLI commands: `ensemble health`, `ensemble mcp`,
-  `ensemble profiles`
+- simple CLI commands (`ensemble --help` lists them all):
+  - endpoint inspection: `health`, `models`, `profiles`, `mcp`
+  - read-only workspace access: `files`, `read`
+  - model calls: `ask`, `chat`
+  - support primitives: `skills`, `checkpoint`
+  - code intelligence: `lsp`, `symbols index`, `graph symbols`
 
 Ensemble should avoid:
 
@@ -64,7 +69,8 @@ Ensemble Substrate
         |
         +-- Inference
         |     +-- llama.cpp OpenAI-compatible endpoint
-        |     +-- Qwen3 4B coding default profile
+        |     +-- Qwen2.5 Coder 7B coding default profile (router)
+        |     +-- Qwen3 4B fast/general profile
         |     +-- Qwen3.6 35B explicit reasoning/offload profile
         |     +-- smoke profile for plumbing checks
         |
@@ -93,8 +99,8 @@ Ensemble Substrate
 ## Core Architecture
 
 ```text
-Nexus = real app / workflow
-Ensemble      = local model + tool-control lab mounted against a workspace
+Nexus    = real app / workflow
+Ensemble = local model + tool-control lab mounted against a workspace
 ```
 
 Runtime shape:
@@ -108,17 +114,43 @@ external agent/coding tool
 
 ## Model Strategy
 
-Ensemble has three inference lanes:
+Ensemble has four inference lanes:
 
-- Coding/default inference: llama.cpp plus Qwen3 4B Instruct GGUF.
+- Coding/default inference: llama.cpp plus Qwen2.5 Coder 7B Instruct GGUF,
+  reached through the router on port 8090.
+- Fast/general inference: llama.cpp plus Qwen3 4B Instruct GGUF.
 - Reasoning/offload inference: llama.cpp plus Qwen3.6 35B-A3B GGUF.
 - Smoke inference: a tiny/small GGUF only for boot tests and endpoint wiring.
 
 The smoke model proves Docker, llama.cpp, LangChain, MCP, CLI health, and
-endpoint plumbing. The 4B model is the default daily driver for an RTX 3060 Ti.
+endpoint plumbing. The 7B coder is the default daily driver for an RTX 3060 Ti;
+Qwen3 4B is the lighter option and the default of the single-model stack.
 The 35B model is useful for harder reasoning, but it is larger than the card's
 VRAM and should be run deliberately with constrained context and CPU/offload
 settings.
+
+There are two supported stacks (see `AGENTS.md`):
+
+| Stack | Compose file | Endpoint | Default model |
+|---|---|---|---|
+| Multi-model | `docker-compose.models.yml` | router, `http://127.0.0.1:8090/v1` | `qwen2.5-coder` |
+| Single-model | `docker-compose.yml` | llama-cpp-python, `http://127.0.0.1:8888/v1` | Qwen3 4B |
+
+The router (`router/main.py`) proxies `/v1/chat/completions` to per-model
+llama.cpp containers, serves `/v1/models`, and exposes `/health` with
+per-upstream status. It maps full GGUF names to router IDs (for example
+`qwen3-4b-instruct-2507-ud-q4_k_xl` -> `qwen3-4b`), and falls back to the
+default model when the `model` field is missing or `default`. Start the
+multi-model stack with:
+
+```bash
+docker compose -f docker-compose.models.yml --profile qwen25-coder up -d
+.venv/bin/ensemble health --profile auto
+```
+
+Each model service sits behind a compose profile (`qwen25-coder`, `qwen3-4b`,
+`qwen36-35b`, `qwen35-uncensored`); enable only the ones you need with
+additional `--profile` flags. The router starts with any of them.
 
 Profiles live under `profiles/`:
 
@@ -129,18 +161,22 @@ Profiles live under `profiles/`:
 Current profiles:
 
 ```text
-auto.json                         # default: qwen3-4b coding lane
-qwen3-4b-local.json
-qwen3.6-35b-a3b.docker.json
-qwen3.6-35b-a3b.lan.json
-qwen3.6-35b-a3b.local.json
-smoke.local.json
+auto.json                         # default: qwen2.5-coder 7B via router :8090
+coding.json                       # qwen2.5-coder 7B via router :8090
+qwen3-4b.json                     # qwen3-4b on :8888 (single-model stack)
+qwen3-4b-local.json               # qwen3-4b on :8888
+reasoning.json                    # qwen3.6-35b on :8888, 8192 context
+qwen3.6-35b-a3b.docker.json       # qwen3.6-35b on :8888, 8192 context
+qwen3.6-35b-a3b.local.json        # qwen3.6-35b host llama-server on :8080
+qwen3.6-35b-a3b.lan.json          # qwen3.6-35b on 10.0.0.151:7474, 196608 context
+smoke.local.json                  # smoke-test on :8888, 4096 context
 ```
 
 Model selection policy:
 
 ```text
-Auto / default  -> qwen3-4b-instruct-2507-ud-q4_k_xl
+Auto / default  -> qwen2.5-coder-7b-instruct-q4_k_m
+Fast / general  -> qwen3-4b-instruct-2507-ud-q4_k_xl
 Reasoning 35B   -> qwen3.6-35b-a3b-ud-q4_k_xl
 Smoke           -> smoke-test
 ```
@@ -153,11 +189,11 @@ want the equivalent of picking another model from a model selector:
 .venv/bin/ensemble ask --profile qwen3.6-35b-a3b.local "Reason through this design."
 ```
 
-Default Docker lane:
+Single-model Docker lane (Qwen3 4B on port 8888):
 
 ```bash
 docker compose --env-file docker/qwen3-4b.conf up -d llm
-.venv/bin/ensemble health --profile auto
+.venv/bin/ensemble health --profile qwen3-4b
 ```
 
 Explicit 35B reasoning/offload lane:
@@ -183,17 +219,21 @@ export LLAMACPP_API_KEY=noop
 llama-server \
   -m /home/jarvis/projects/third-party/ensemble/models/qwen3.6-35b-a3b-ud-q4_k_xl.gguf \
   --host 127.0.0.1 \
-  --port 8888 \
+  --port 8080 \
   --jinja \
-  -c 16384 \
+  -c 8192 \
   -ngl 99 \
   --n-cpu-moe 999 \
   --flash-attn on
 ```
 
+That shape matches the `qwen3.6-35b-a3b.local` profile (port 8080, 8192
+context). Raise `-c` only together with that profile's `context_window`.
+
 Hardware caveat: Qwen3.6-35B-A3B is the reasoning lane, but it should be run
 deliberately on an RTX 3060 Ti. Keep context controlled, use llama.cpp
-MoE/offload settings, and prefer the 4B profile for coding/tool-heavy loops.
+MoE/offload settings, and prefer the 7B coder or 4B profile for
+coding/tool-heavy loops.
 
 ## Support Mechanics
 
@@ -209,6 +249,17 @@ Ensemble keeps support primitives for external coding tools:
 - Quality monitor: catch empty replies, fake tools, and repeated loops.
 - Checkpointing: snapshot files before any edit-capable flow.
 - Retry with failing tests: second attempt sees the failure output.
+
+Implementation status:
+
+- Implemented as library primitives, not yet exposed as agent tools:
+  Write/Edit separation (`src/ensemble/tool_modes.py`, `plan_write` and
+  `plan_edit`), checkpoints (`checkpoints.py`), workspace/write/shell guards
+  (`safety.py`), skill-card selection (`skills.py`), and quality checks
+  (`quality.py`). `plan_edit` refuses to edit without a prior checkpoint.
+- Detection only: `quality.py` flags empty replies, fake tools, and loops, and
+  `needs_repair` spots bad tool-call output. Automatic repair and retry with
+  failing tests are not implemented; they are planned in `docs/harness-roadmap.md`.
 
 Useful local checks:
 
@@ -232,7 +283,7 @@ See `docs/harness-roadmap.md` for the staged support-mechanics plan.
 | Privacy | Docker + local volumes | Keeps repo, memory, and logs isolated from cloud tools |
 | Sandboxing | Docker | Lets tools run with a narrower blast radius |
 | Code intelligence | Code indexing + LSP | Gives repo awareness without blindly reading files |
-| Memory | Thread/project memory | Stores reusable project facts, decisions, and architecture notes |
+| Memory | Append-only `.ensemble/memory.md` per workspace | Minimal project notes (`memory.py`); durable cross-agent memory lives on the Nexus MCP bus, not in Ensemble |
 | Extensibility | Skills in Markdown | Reusable instructions, workflows, checklists, and project habits |
 | MCP | Filesystem/Python/code intelligence MCP | Controlled tool access |
 | UI | VS Code, Cursor, TUI, CLI | Visual coding, terminal control, or automation |
@@ -252,8 +303,8 @@ Default v1 direction:
 - Test `codebase-memory-mcp` first because it is binary-based and local-only.
 - Test `code-review-graph` as a developer-side MCP sidecar for structural code
   intelligence and blast-radius queries.
-- Test `CodeGraphContext` second, likely in a Python 3.14 container if its
-  Python compatibility lags behind this project's Python 3.15 baseline.
+- Test `CodeGraphContext` second, likely in its own Python 3.14 container if
+  its dependencies lag behind this project's Python 3.14.5 baseline.
 - Keep code intelligence as MCP-side capability, not baked into the core agent.
 
 ## Code Intelligence: code-review-graph
@@ -262,18 +313,19 @@ Ensemble can use `code-review-graph` as a developer-side code intelligence
 MCP sidecar. It builds a local structural graph of the repo under
 `.code-review-graph/` and exposes that graph to AI coding tools through MCP.
 
-Install it outside the Ensemble app venv:
+Install it outside the Ensemble app venv, using Python 3.14:
 
 ```bash
-python3.15 -m pip install --user pipx
-python3.15 -m pipx ensurepath
+python3.14 -m pip install --user pipx
+python3.14 -m pipx ensurepath
 source ~/.bashrc
 pipx install --python /usr/bin/python3.14 code-review-graph
 code-review-graph --help
 ```
 
-`code-review-graph` is installed with Python 3.14 because one transitive native
-dependency currently fails to build under Python 3.15.
+It stays out of the app venv so its dependencies cannot affect Ensemble's
+pinned runtime. See `mcp/code-review-graph.json` for the MCP wiring and
+`tools/code-intelligence/README.md` for the sidecar policy.
 
 Build the graph:
 
@@ -303,6 +355,19 @@ MCP config:
 
 The graph is local-only and should not be committed.
 
+## Code Intelligence: Symbol Index
+
+Ensemble also builds its own small, durable symbol index from LSP output:
+
+```bash
+.venv/bin/ensemble symbols index src/ensemble
+.venv/bin/ensemble graph symbols .ensemble/symbols.jsonl
+```
+
+These write `.ensemble/symbols.jsonl` and `.ensemble/symbol-graph.jsonl`, which
+`SymbolLookup` and `ImpactAnalysis` (`src/ensemble/review/`) read. See
+`docs/repo-intelligence.md`.
+
 First test prompt after setup:
 
 ```text
@@ -317,7 +382,9 @@ Use code-review-graph to inspect this Ensemble repo. Give me:
 
 v1 is deliberately conservative:
 
-- Reads are limited to `ENSEMBLE_WORKSPACE`.
+- Reads are limited to `ENSEMBLE_WORKSPACE`. The default workspace is
+  `/home/jarvis/projects/nexus`, a separate project Ensemble is mounted
+  against, not this repo; set `ENSEMBLE_WORKSPACE` to point elsewhere.
 - Writes are disabled by default.
 - Shell execution is disabled by default.
 - The Docker model mount is read-only.
@@ -365,17 +432,14 @@ curl -fsS http://localhost:8888/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ensemble" \
   -d '{
-    "model": "qwen3.6-35b-a3b-ud-q4_k_xl",
+    "model": "qwen3-4b-instruct-2507-ud-q4_k_xl",
     "messages": [{"role": "user", "content": "Say hello from Ensemble."}],
     "temperature": 0.2
   }'
 ```
 
-For the default 4B lane, use:
-
-```json
-"model": "qwen3-4b-instruct-2507-ud-q4_k_xl"
-```
+The `model` must match the alias of the loaded model. For the 35B lane
+(`docker/qwen3.6-35b.conf`), use `"qwen3.6-35b-a3b-ud-q4_k_xl"`.
 
 Stop the server:
 
@@ -385,10 +449,11 @@ docker compose down
 
 ## Milestone 2: Python Client
 
-Install the CLI in a Python 3.15 environment:
+Install the CLI in a Python 3.14.5 environment (`make bootstrap` does this
+and checks the patch version):
 
 ```bash
-python -m pip install -e .
+python3.14 -m pip install -e .
 ```
 
 Check the endpoint:
@@ -402,7 +467,7 @@ ensemble health --profile smoke.local
 ensemble models
 ```
 
-With `--profile`, `health` and `models` use that JSON profile’s `base_url` and
+With `--profile`, `health` and `models` use that JSON profile's `base_url` and
 `api_key_env` for the request (so `.env` `ENSEMBLE_LLM_BASE_URL` does not
 override the profile when you are probing a specific server).
 
@@ -420,11 +485,13 @@ ensemble chat --classic
 
 ## Milestone 3: Read-Only Repo Context
 
-By default, the workspace is:
+By default, the workspace is `ENSEMBLE_WORKSPACE`:
 
 ```text
 /home/jarvis/projects/nexus
 ```
+
+This is the project Ensemble is mounted against, not the Ensemble repo.
 
 List files:
 
@@ -461,6 +528,12 @@ Milestone 5: controlled write mode
 Shell tools should stay out until the read-only and patch proposal flows are
 boringly reliable.
 
+## License
+
+This repository is currently unlicensed (`UNLICENSED` in
+`ensemble-vscode/package.json`) and intended for private/local use. Agent and
+contributor conventions live in `AGENTS.md`.
+
 ## Project Layout
 
 ```text
@@ -483,6 +556,7 @@ boringly reliable.
   tests/
   docs/
   systemd/
+  tools/              # Code-intelligence sidecar notes
   models/             # GGUF weights (gitignored)
   state/              # Runtime checkpoints and evidence
 ```

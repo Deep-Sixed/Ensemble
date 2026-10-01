@@ -10,6 +10,17 @@ symbol identity, file path, ownership, ranges, and content hash.
 Derived graph facts. Produced from `symbols.jsonl`. Source of truth for
 file/symbol nodes and containment edges.
 
+Both files are written by the CLI:
+
+```bash
+ensemble symbols index <path>        # -> .ensemble/symbols.jsonl (needs an LSP server)
+ensemble graph symbols .ensemble/symbols.jsonl   # -> .ensemble/symbol-graph.jsonl
+```
+
+`SymbolLookup` and `ImpactAnalysis` live in `src/ensemble/review/`
+(`symbol_lookup.py`, `impact_analysis.py`) and load both files via
+`from_files(symbols_path, graph_path)`.
+
 ## Boundary Rule
 
 Anything above JSONL must not depend on:

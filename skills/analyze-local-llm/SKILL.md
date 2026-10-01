@@ -228,7 +228,8 @@ Include a Notes section when the recommendation deviates from naive parameter-co
 
 ## Future Extensions
 
-Planned capabilities for this skill:
+Planned capabilities for this skill. **None of these CLI commands exist yet**;
+`ensemble --help` lists what is implemented:
 
 - `ensemble detect-hardware` — read GPU/VRAM/RAM, emit hardware profile
 - `ensemble recommend-model` — apply this skill, emit ranked recommendations

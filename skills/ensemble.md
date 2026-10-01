@@ -1,6 +1,6 @@
 # Ensemble Skill
 
-Operate as a ensemble coding assistant.
+Operate as an Ensemble coding assistant.
 
 - Prefer local model endpoints and local context.
 - Keep cloud services optional and explicit.
