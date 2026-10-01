@@ -56,6 +56,7 @@ def parse_stream(lines: Iterable[str], on_text: TextCallback | None = None) -> A
     turn = AssistantTurn()
     parts: list[str] = []
     pending: dict[int, dict[str, str]] = {}
+    last_index = 0
 
     for line in lines:
         if not line or not line.startswith("data:"):
@@ -77,9 +78,8 @@ def parse_stream(lines: Iterable[str], on_text: TextCallback | None = None) -> A
                 if on_text is not None:
                     on_text(text)
             for call in delta.get("tool_calls") or []:
-                slot = pending.setdefault(
-                    call.get("index", 0), {"id": "", "name": "", "arguments": ""}
-                )
+                last_index = _slot_index(call, pending, last_index)
+                slot = pending.setdefault(last_index, {"id": "", "name": "", "arguments": ""})
                 function = call.get("function") or {}
                 slot["id"] = call.get("id") or slot["id"]
                 slot["name"] += function.get("name") or ""
@@ -93,6 +93,45 @@ def parse_stream(lines: Iterable[str], on_text: TextCallback | None = None) -> A
         if slot["name"]:
             turn.tool_calls.append(
                 ToolCall(slot["id"] or f"call_{index}", slot["name"], slot["arguments"] or "{}")
+            )
+    if not turn.tool_calls:
+        _recover_text_tool_calls(turn)
+    return turn
+
+
+def _slot_index(call: dict[str, Any], pending: dict[int, dict[str, str]], last: int) -> int:
+    """Pick the accumulator for a streamed tool-call fragment.
+
+    Servers normally send `index`. Some omit it: then a fragment carrying a new
+    `id` starts another call, and one without an id continues the previous call.
+    """
+    index = call.get("index")
+    if isinstance(index, int):
+        return index
+    new_id = call.get("id")
+    if pending and new_id and pending[last]["id"] and pending[last]["id"] != new_id:
+        return max(pending) + 1
+    return last
+
+
+def parse_completion(body: dict[str, Any]) -> AssistantTurn:
+    """Build an AssistantTurn from a non-streaming chat completion body."""
+    if "error" in body:
+        raise LLMError(f"Model endpoint error: {body['error']}")
+    choices = body.get("choices") or []
+    if not choices:
+        raise LLMError("Model endpoint returned no choices")
+    choice = choices[0]
+    message = choice.get("message") or {}
+    turn = AssistantTurn(content=message.get("content") or "", finish_reason=choice.get("finish_reason"))
+    for index, call in enumerate(message.get("tool_calls") or []):
+        function = call.get("function") or {}
+        if function.get("name"):
+            arguments = function.get("arguments") or "{}"
+            if not isinstance(arguments, str):
+                arguments = json.dumps(arguments)
+            turn.tool_calls.append(
+                ToolCall(call.get("id") or f"call_{index}", function["name"], arguments)
             )
     if not turn.tool_calls:
         _recover_text_tool_calls(turn)
@@ -157,6 +196,17 @@ class ChatClient:
         try:
             if response.status_code >= 400:
                 raise LLMError(f"{url} returned {response.status_code}: {response.text[:500]}")
+            headers = getattr(response, "headers", None) or {}
+            content_type = next((str(v) for k, v in headers.items() if k.lower() == "content-type"), "")
+            if "application/json" in content_type.lower():
+                # The server ignored stream=true and sent one JSON document.
+                try:
+                    turn = parse_completion(response.json())
+                except ValueError as exc:
+                    raise LLMError(f"{url} returned invalid JSON: {exc}") from exc
+                if on_text is not None and turn.content:
+                    on_text(turn.content)
+                return turn
             return parse_stream(response.iter_lines(decode_unicode=True), on_text)
         except requests.RequestException as exc:
             raise LLMError(f"Stream from {url} failed: {exc}") from exc

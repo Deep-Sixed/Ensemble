@@ -11,13 +11,16 @@ from ensemble.llm import ChatClient, LLMError, TextCallback
 from ensemble.quality import inspect_response
 from ensemble.safety import SafetyError, WorkspaceGuard
 from ensemble.session import Session
-from ensemble.skills import inject_skill_cards
+from ensemble.skills import default_skill_root, inject_skill_cards
 from ensemble.tools.coding import Tool, ToolError, coding_tools
 
 EventCallback = Callable[[str, dict[str, Any]], None]
 
 CONTEXT_FILES = ("AGENTS.md", "CLAUDE.md")
 MAX_CONTEXT_CHARS = 8000
+# ~12k tokens of history sent per request; local models have small windows.
+DEFAULT_HISTORY_CHARS = 48000
+_ELIDED = "[output elided to fit the context window]"
 
 SYSTEM_PROMPT = """You are Ensemble, a small coding agent working in the user's workspace.
 Use the available tools to read and change code. Work in small steps and verify.
@@ -47,6 +50,37 @@ def build_system_prompt(guard: WorkspaceGuard, tools: list[Tool]) -> str:
     return "\n\n".join(parts)
 
 
+def _size(message: dict[str, Any]) -> int:
+    return len(json.dumps(message, ensure_ascii=False))
+
+
+def fit_history(messages: list[dict[str, Any]], max_chars: int) -> list[dict[str, Any]]:
+    """Return a copy of messages that fits max_chars; the stored history is untouched.
+
+    Oldest tool outputs are elided first. If that is not enough, whole leading
+    turns are dropped at a user-message boundary so no tool call loses its reply.
+    The most recent user prompt is always kept.
+    """
+    fitted = [dict(m) for m in messages]
+    total = sum(_size(m) for m in fitted)
+    last_user = max((i for i, m in enumerate(fitted) if m.get("role") == "user"), default=0)
+    for message in fitted[:last_user]:
+        if total <= max_chars:
+            return fitted
+        if message.get("role") == "tool" and message.get("content") != _ELIDED:
+            before = _size(message)
+            message["content"] = _ELIDED
+            total -= before - _size(message)
+    start = 0
+    while total > max_chars and start < last_user:
+        total -= _size(fitted[start])
+        start += 1
+        while start < last_user and fitted[start].get("role") != "user":
+            total -= _size(fitted[start])
+            start += 1
+    return fitted[start:]
+
+
 class Agent:
     def __init__(
         self,
@@ -56,9 +90,11 @@ class Agent:
         session: Session | None = None,
         messages: list[dict[str, Any]] | None = None,
         max_turns: int = 25,
+        max_history_chars: int = DEFAULT_HISTORY_CHARS,
         on_text: TextCallback | None = None,
         on_event: EventCallback | None = None,
         checkpoint_root: Path | None = None,
+        skill_root: Path | None = None,
     ) -> None:
         self.guard = WorkspaceGuard(
             config.workspace,
@@ -71,9 +107,12 @@ class Agent:
         self._client = client or ChatClient(config)
         self._session = session
         self._max_turns = max_turns
+        self._max_history_chars = max_history_chars
         self._on_text = on_text
         self._on_event = on_event
-        self._skill_root = self.guard.root / "skills"
+        # Ensemble's own skill cards, never the workspace's: an untrusted repo's
+        # markdown must not be injected into the prompt as if it were ours.
+        self._skill_root = skill_root if skill_root is not None else default_skill_root()
         self._sequence: list[str] = []
         self.messages: list[dict[str, Any]] = list(messages or [])
         self._system = {
@@ -95,8 +134,9 @@ class Agent:
         skills = inject_skill_cards(prompt, self._skill_root) if self._skill_root.is_dir() else ""
         self._add({"role": "user", "content": f"{skills}\n\n{prompt}".strip()})
         specs = [tool.spec() for tool in self.tools]
+        self._sequence = []  # loop detection is per prompt, not per session
         for _ in range(self._max_turns):
-            turn = self._client.complete([self._system, *self.messages], specs, self._on_text)
+            turn = self._client.complete([self._system, *fit_history(self.messages, self._max_history_chars)], specs, self._on_text)
             self._add(turn.to_message())
             if not turn.tool_calls:
                 for finding in inspect_response(turn.content):

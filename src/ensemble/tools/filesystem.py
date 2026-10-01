@@ -1,8 +1,20 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from ensemble.safety import SafetyError, WorkspaceGuard
+
+
+_SKIP_NAMES = {
+    ".git",
+    ".venv",
+    "__pycache__",
+    "node_modules",
+    ".next",
+    "dist",
+    "build",
+}
 
 
 def list_files(
@@ -16,13 +28,24 @@ def list_files(
         raise SafetyError(f"Not a directory: {root}")
 
     files: list[str] = []
-    for path in sorted(root.rglob("*")):
-        if len(files) >= limit:
-            break
-        if _skip_path(path):
-            continue
-        files.append(str(path.relative_to(guard.root)))
+    _walk(root, guard.root, files, limit)
     return files
+
+
+def _walk(directory: Path, workspace: Path, files: list[str], limit: int) -> None:
+    """Sorted depth-first listing that never descends into skipped directories."""
+    try:
+        entries = sorted(os.scandir(directory), key=lambda entry: entry.name)
+    except OSError:
+        return
+    for entry in entries:
+        if len(files) >= limit:
+            return
+        if entry.name in _SKIP_NAMES:
+            continue
+        files.append(str(Path(entry.path).relative_to(workspace)))
+        if entry.is_dir(follow_symlinks=False):
+            _walk(Path(entry.path), workspace, files, limit)
 
 
 def read_file(
@@ -40,16 +63,3 @@ def read_file(
         raise SafetyError(f"File is {size} bytes; max is {max_bytes} bytes")
 
     return path.read_text(encoding="utf-8", errors="replace")
-
-
-def _skip_path(path: Path) -> bool:
-    skip_names = {
-        ".git",
-        ".venv",
-        "__pycache__",
-        "node_modules",
-        ".next",
-        "dist",
-        "build",
-    }
-    return any(part in skip_names for part in path.parts)

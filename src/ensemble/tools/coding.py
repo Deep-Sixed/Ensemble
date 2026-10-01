@@ -9,6 +9,7 @@ import difflib
 import os
 import signal
 import subprocess
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,7 +18,7 @@ from typing import Any
 from ensemble.checkpoints import create_checkpoint
 from ensemble.safety import SafetyError, WorkspaceGuard
 from ensemble.tools.filesystem import list_files
-from ensemble.tool_modes import plan_edit, plan_write
+from ensemble.tool_modes import plan_write
 
 MAX_OUTPUT_LINES = 2000
 MAX_OUTPUT_BYTES = 50 * 1024
@@ -90,6 +91,36 @@ def truncate_tail(text: str) -> tuple[str, bool]:
     return out, clipped
 
 
+def _read_window(
+    path: Path, offset: int, limit: int | None
+) -> tuple[list[str], int, int, bool]:
+    """Stream a file once: keep only the requested window, still count every line.
+
+    Returns (kept lines, total lines, window length, whether kept lines were capped).
+    Memory stays bounded by the output limits however large the file is.
+    """
+    with path.open("rb") as probe:
+        if b"\0" in probe.read(8192):
+            raise ToolError("Binary file; refusing to read it as text")
+    kept: list[str] = []
+    kept_bytes = 0
+    total = window_len = 0
+    overflow = False
+    with path.open(encoding="utf-8", errors="replace") as handle:
+        for total, line in enumerate(handle, 1):
+            if total < offset or (limit is not None and total >= offset + limit):
+                continue
+            window_len += 1
+            if overflow:
+                continue
+            kept_bytes += len(line.encode("utf-8"))
+            if len(kept) >= MAX_OUTPUT_LINES + 1 or kept_bytes > MAX_OUTPUT_BYTES * 2:
+                overflow = True
+                continue
+            kept.append(line)
+    return kept, total, window_len, overflow
+
+
 def read_tool(guard: WorkspaceGuard) -> Tool:
     def run(args: dict[str, Any]) -> str:
         path = guard.resolve_read_path(_str_arg(args, "path"))
@@ -99,12 +130,12 @@ def read_tool(guard: WorkspaceGuard) -> Tool:
         limit = _int_arg(args, "limit")
         if offset < 1 or (limit is not None and limit < 1):
             raise ToolError("'offset' and 'limit' must be positive")
-        lines = path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
-        total = len(lines)
+        window, total, window_len, overflow = _read_window(path, offset, limit)
         if offset > max(total, 1):
             raise ToolError(f"offset {offset} is beyond end of file ({total} lines)")
-        end = total if limit is None else min(total, offset - 1 + limit)
-        text, clipped = truncate_head("".join(lines[offset - 1 : end]))
+        end = offset - 1 + window_len
+        text, clipped = truncate_head("".join(window))
+        clipped = clipped or overflow
         shown = len(text.splitlines())
         if clipped:
             next_offset = offset + shown
@@ -160,16 +191,22 @@ def edit_tool(guard: WorkspaceGuard, checkpoint_root: Path) -> Tool:
         target = guard.resolve_write_path(relative)
         if not target.exists():
             raise SafetyError("Edit requires an existing file. Use write for new files.")
-        original = target.read_text(encoding="utf-8")
+        # Bytes, not read_text/write_text: those translate CRLF to LF and would
+        # rewrite every line ending in the file.
+        original = target.read_bytes().decode("utf-8")
+        if "\r\n" in original:
+            old = old.replace("\r\n", "\n").replace("\n", "\r\n")
+            new = new.replace("\r\n", "\n").replace("\n", "\r\n")
         count = original.count(old)
         if count == 0:
             raise ToolError("old_text not found. It must match the file exactly, incl. whitespace.")
         if count > 1:
             raise ToolError(f"old_text matches {count} places. Include more surrounding lines.")
-        create_checkpoint(guard, relative, checkpoint_root)
-        plan_edit(guard, relative, checkpoint_root)
+        checkpoint = create_checkpoint(guard, relative, checkpoint_root)
+        if not checkpoint.snapshot.is_file():
+            raise SafetyError("Edit requires a checkpoint before modification.")
         updated = original.replace(old, new, 1)
-        target.write_text(updated, encoding="utf-8")
+        target.write_bytes(updated.encode("utf-8"))
         diff = "".join(
             difflib.unified_diff(
                 original.splitlines(keepends=True),
@@ -197,6 +234,38 @@ def edit_tool(guard: WorkspaceGuard, checkpoint_root: Path) -> Tool:
     )
 
 
+# Variables the model's shell may inherit. Everything else (API keys, tokens
+# loaded into the operator's shell) is withheld.
+_SHELL_ENV_ALLOW = ("PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_ALL", "TERM", "TMPDIR", "TZ")
+_TAIL_CAP_BYTES = 4 * MAX_OUTPUT_BYTES
+
+
+def _shell_env() -> dict[str, str]:
+    return {k: v for k, v in os.environ.items() if k in _SHELL_ENV_ALLOW}
+
+
+class _TailReader(threading.Thread):
+    """Drain a pipe, keeping only the last _TAIL_CAP_BYTES so output stays bounded."""
+
+    def __init__(self, stream: Any) -> None:
+        super().__init__(daemon=True)
+        self._stream = stream
+        self._buffer = bytearray()
+        self.dropped = False
+
+    def run(self) -> None:
+        while chunk := self._stream.read1(65536):
+            self._buffer += chunk
+            if len(self._buffer) > _TAIL_CAP_BYTES:
+                del self._buffer[: len(self._buffer) - _TAIL_CAP_BYTES]
+                self.dropped = True
+
+    def result(self) -> bytes:
+        # A backgrounded grandchild can hold the pipe open; don't wait on it forever.
+        self.join(timeout=2.0)
+        return bytes(self._buffer)
+
+
 def bash_tool(guard: WorkspaceGuard) -> Tool:
     def run(args: dict[str, Any]) -> str:
         guard.require_shell()
@@ -207,19 +276,27 @@ def bash_tool(guard: WorkspaceGuard) -> Tool:
         process = subprocess.Popen(
             ["bash", "-c", command],
             cwd=guard.root,
+            env=_shell_env(),
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             start_new_session=True,
         )
+        tail = _TailReader(process.stdout)
+        tail.start()
         timed_out = False
         try:
-            raw, _ = process.communicate(timeout=timeout)
+            process.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             timed_out = True
             os.killpg(process.pid, signal.SIGKILL)
-            raw, _ = process.communicate()
-        text, clipped = truncate_tail(raw.decode("utf-8", errors="replace"))
+            process.wait()
+        finally:
+            if process.poll() is None:  # e.g. KeyboardInterrupt
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+        text, clipped = truncate_tail(tail.result().decode("utf-8", errors="replace"))
+        clipped = clipped or tail.dropped
         if clipped:
             text = "[Output truncated to the last part]\n" + text
         if timed_out:
