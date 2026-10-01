@@ -8,6 +8,12 @@ class SafetyError(ValueError):
     """Raised when a requested operation crosses an Ensemble boundary."""
 
 
+# Editing these gives code execution outside the tool sandbox (.git/config
+# fsmonitor, hooks) or lets the agent rewrite its own checkpoints and history.
+_PROTECTED_ANYWHERE = {".git"}
+_PROTECTED_AT_ROOT = {".ensemble"}
+
+
 @dataclass(frozen=True)
 class WorkspaceGuard:
     root: Path
@@ -26,7 +32,11 @@ class WorkspaceGuard:
     def resolve_write_path(self, path: str | Path) -> Path:
         if not self.allow_writes:
             raise SafetyError("Writes are disabled. Set ENSEMBLE_ALLOW_WRITES=true.")
-        return self._resolve(path)
+        resolved = self._resolve(path)
+        parts = resolved.relative_to(self.root).parts
+        if (parts and parts[0] in _PROTECTED_AT_ROOT) or _PROTECTED_ANYWHERE.intersection(parts):
+            raise SafetyError(f"Path is protected from writes: {resolved.relative_to(self.root)}")
+        return resolved
 
     def require_shell(self) -> None:
         if not self.allow_shell:

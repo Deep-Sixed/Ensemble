@@ -70,6 +70,10 @@ def load_config(
         profile_max_tokens = profile.max_tokens
         profile_temperature = profile.temperature
 
+    # `is None`, not `or`: a profile temperature of 0 is valid and falsy.
+    default_max_tokens = 1024 if profile_max_tokens is None else int(profile_max_tokens)
+    default_temperature = 0.2 if profile_temperature is None else float(profile_temperature)
+
     # CLI `--profile` on commands like `health` and `models`: use the profile JSON
     # for LLM endpoint fields so ENSEMBLE_LLM_BASE_URL does not mask base_url.
     if profile_override is not None:
@@ -78,8 +82,8 @@ def load_config(
             llm_model=profile_model or "qwen2.5-coder-7b-instruct-q4_k_m",
             api_key=profile_api_key or "ensemble",
             profile=profile_name,
-            max_tokens=profile_max_tokens or 1024,
-            temperature=float(profile_temperature or 0.2),
+            max_tokens=default_max_tokens,
+            temperature=default_temperature,
             workspace=workspace,
             allow_writes=_bool_env("ENSEMBLE_ALLOW_WRITES", False),
             allow_shell=_bool_env("ENSEMBLE_ALLOW_SHELL", False),
@@ -99,10 +103,8 @@ def load_config(
         ),
         api_key=_env("ENSEMBLE_API_KEY") or profile_api_key or "ensemble",
         profile=profile_name,
-        max_tokens=int(_env("ENSEMBLE_MAX_TOKENS") or str(profile_max_tokens or 1024)),
-        temperature=float(
-            _env("ENSEMBLE_TEMPERATURE") or str(profile_temperature or 0.2)
-        ),
+        max_tokens=int(_env("ENSEMBLE_MAX_TOKENS") or default_max_tokens),
+        temperature=float(_env("ENSEMBLE_TEMPERATURE") or default_temperature),
         workspace=workspace,
         allow_writes=_bool_env("ENSEMBLE_ALLOW_WRITES", False),
         allow_shell=_bool_env("ENSEMBLE_ALLOW_SHELL", False),

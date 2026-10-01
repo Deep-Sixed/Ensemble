@@ -9,6 +9,7 @@ import difflib
 import os
 import signal
 import subprocess
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -160,7 +161,12 @@ def edit_tool(guard: WorkspaceGuard, checkpoint_root: Path) -> Tool:
         target = guard.resolve_write_path(relative)
         if not target.exists():
             raise SafetyError("Edit requires an existing file. Use write for new files.")
-        original = target.read_text(encoding="utf-8")
+        # Bytes, not read_text/write_text: those translate CRLF to LF and would
+        # rewrite every line ending in the file.
+        original = target.read_bytes().decode("utf-8")
+        if "\r\n" in original:
+            old = old.replace("\r\n", "\n").replace("\n", "\r\n")
+            new = new.replace("\r\n", "\n").replace("\n", "\r\n")
         count = original.count(old)
         if count == 0:
             raise ToolError("old_text not found. It must match the file exactly, incl. whitespace.")
@@ -169,7 +175,7 @@ def edit_tool(guard: WorkspaceGuard, checkpoint_root: Path) -> Tool:
         create_checkpoint(guard, relative, checkpoint_root)
         plan_edit(guard, relative, checkpoint_root)
         updated = original.replace(old, new, 1)
-        target.write_text(updated, encoding="utf-8")
+        target.write_bytes(updated.encode("utf-8"))
         diff = "".join(
             difflib.unified_diff(
                 original.splitlines(keepends=True),
@@ -197,6 +203,38 @@ def edit_tool(guard: WorkspaceGuard, checkpoint_root: Path) -> Tool:
     )
 
 
+# Variables the model's shell may inherit. Everything else (API keys, tokens
+# loaded into the operator's shell) is withheld.
+_SHELL_ENV_ALLOW = ("PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_ALL", "TERM", "TMPDIR", "TZ")
+_TAIL_CAP_BYTES = 4 * MAX_OUTPUT_BYTES
+
+
+def _shell_env() -> dict[str, str]:
+    return {k: v for k, v in os.environ.items() if k in _SHELL_ENV_ALLOW}
+
+
+class _TailReader(threading.Thread):
+    """Drain a pipe, keeping only the last _TAIL_CAP_BYTES so output stays bounded."""
+
+    def __init__(self, stream: Any) -> None:
+        super().__init__(daemon=True)
+        self._stream = stream
+        self._buffer = bytearray()
+        self.dropped = False
+
+    def run(self) -> None:
+        while chunk := self._stream.read1(65536):
+            self._buffer += chunk
+            if len(self._buffer) > _TAIL_CAP_BYTES:
+                del self._buffer[: len(self._buffer) - _TAIL_CAP_BYTES]
+                self.dropped = True
+
+    def result(self) -> bytes:
+        # A backgrounded grandchild can hold the pipe open; don't wait on it forever.
+        self.join(timeout=2.0)
+        return bytes(self._buffer)
+
+
 def bash_tool(guard: WorkspaceGuard) -> Tool:
     def run(args: dict[str, Any]) -> str:
         guard.require_shell()
@@ -207,19 +245,27 @@ def bash_tool(guard: WorkspaceGuard) -> Tool:
         process = subprocess.Popen(
             ["bash", "-c", command],
             cwd=guard.root,
+            env=_shell_env(),
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             start_new_session=True,
         )
+        tail = _TailReader(process.stdout)
+        tail.start()
         timed_out = False
         try:
-            raw, _ = process.communicate(timeout=timeout)
+            process.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             timed_out = True
             os.killpg(process.pid, signal.SIGKILL)
-            raw, _ = process.communicate()
-        text, clipped = truncate_tail(raw.decode("utf-8", errors="replace"))
+            process.wait()
+        finally:
+            if process.poll() is None:  # e.g. KeyboardInterrupt
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+        text, clipped = truncate_tail(tail.result().decode("utf-8", errors="replace"))
+        clipped = clipped or tail.dropped
         if clipped:
             text = "[Output truncated to the last part]\n" + text
         if timed_out:
