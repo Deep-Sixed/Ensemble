@@ -284,3 +284,21 @@ def test_session_persists_and_resumes(tmp_path: Path) -> None:
     resumed.run("more")
     assert [m["role"] for m in resumed.messages] == ["user", "assistant", "user", "assistant"]
     assert len(latest.load()) == 4
+
+
+@pytest.mark.parametrize(
+    "sequence",
+    [list("AAAAAA"), list("ABABAB"), list("ABCABC"), list("xyABABAB")],
+)
+def test_repeat_detector_catches_cycles_of_one_two_and_three(sequence: list[str]) -> None:
+    from ensemble.quality import inspect_response
+
+    codes = [f.code for f in inspect_response("x", sequence)]
+    assert "repeated_tool_loop" in codes
+
+
+@pytest.mark.parametrize("sequence", [list("ABCDEF"), list("AABBCC"), list("ABABAC"), list("ABAB")])
+def test_repeat_detector_ignores_progress_and_short_sequences(sequence: list[str]) -> None:
+    from ensemble.quality import inspect_response
+
+    assert "repeated_tool_loop" not in [f.code for f in inspect_response("x", sequence)]

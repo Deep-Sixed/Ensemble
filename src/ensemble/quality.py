@@ -23,9 +23,10 @@ def inspect_response(text: str, previous_tool_sequence: list[str] | None = None)
 
     if previous_tool_sequence and len(previous_tool_sequence) >= 6:
         tail = previous_tool_sequence[-6:]
-        if tail[:3] == tail[3:]:
+        # Same call x6, an A/B alternation, or a 3-call cycle repeated twice.
+        if any(all(tail[i] == tail[i + p] for i in range(6 - p)) for p in (1, 2, 3)):
             findings.append(
-                QualityFinding("repeated_tool_loop", "Tool sequence repeated twice.")
+                QualityFinding("repeated_tool_loop", "Tool sequence is repeating.")
             )
 
     return findings
