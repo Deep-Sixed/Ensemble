@@ -5,8 +5,8 @@ privacy, code context, MCP tools, and markdown-based operating guidance stay
 local by default.
 
 It runs a GGUF model through an OpenAI-compatible llama.cpp server, connects
-through simple inspection utilities, and exposes local context to external
-agent/coding tools.
+through simple inspection utilities, ships its own small coding agent
+(`ensemble agent`), and exposes local context to external agent/coding tools.
 
 Ensemble uses Qwen GGUF models through llama.cpp. On the current RTX 3060 Ti
 machine, the default lane is `qwen2.5-coder-7b-instruct-q4_k_m` for daily coding,
@@ -64,7 +64,7 @@ intelligence, memory, tools, and UI stay local by default.
 VS Code / Cursor / OpenCode / TUI / CLI
         |
         v
-External Agent / Coding Tool
+`ensemble agent` / External Agent / Coding Tool
         |
         v
 Ensemble Substrate
@@ -254,14 +254,18 @@ Ensemble keeps support primitives for external coding tools:
 
 Implementation status:
 
-- Implemented as library primitives, not yet exposed as agent tools:
-  Write/Edit separation (`src/ensemble/tool_modes.py`, `plan_write` and
-  `plan_edit`), checkpoints (`checkpoints.py`), workspace/write/shell guards
-  (`safety.py`), skill-card selection (`skills.py`), and quality checks
-  (`quality.py`). `plan_edit` refuses to edit without a prior checkpoint.
-- Detection only: `quality.py` flags empty replies, fake tools, and loops, and
-  `needs_repair` spots bad tool-call output. Automatic repair and retry with
-  failing tests are not implemented; they are planned in `docs/harness-roadmap.md`.
+- Implemented and used by `ensemble agent`: Write/Edit separation
+  (`tool_modes.py`; `write` never overwrites, `edit` needs an existing file),
+  checkpoint-before-edit (`checkpoints.py`; `edit` snapshots the file first),
+  workspace/write/shell guards (`safety.py`), skill-card selection (`skills.py`),
+  and the quality monitor (`quality.py`).
+- Quality monitor scope: it flags empty replies and fake tool calls (reported as
+  warnings) and stops a run when the last six tool calls repeat (the same call, an
+  A/B alternation, or a 3-call cycle). Automatic output repair (`needs_repair`) and
+  retry with failing tests are not implemented; they are planned in
+  `docs/harness-roadmap.md`.
+- Skill cards ship inside the wheel (`ensemble/_skills`) and are resolved by
+  `skills.default_skill_root()`, never from the workspace being edited.
 
 Useful local checks:
 
@@ -270,9 +274,9 @@ Useful local checks:
 .venv/bin/ensemble checkpoint README.md
 ```
 
-The current implementation still defaults to substrate behavior: inspect
-profiles, inspect MCP config, expose skills, and create checkpoints. Automatic
-writes remain out of v1 scope.
+Writes and shell stay off by default. `ensemble agent` only writes or runs
+commands when the operator sets `ENSEMBLE_ALLOW_WRITES=true` or
+`ENSEMBLE_ALLOW_SHELL=true`.
 
 See `docs/harness-roadmap.md` for the staged support-mechanics plan.
 
@@ -384,13 +388,18 @@ Use code-review-graph to inspect this Ensemble repo. Give me:
 
 v1 is deliberately conservative:
 
-- Reads are limited to `ENSEMBLE_WORKSPACE`. The default workspace is
-  `/home/jarvis/projects/nexus`, a separate project Ensemble is mounted
-  against, not this repo; set `ENSEMBLE_WORKSPACE` to point elsewhere.
-- Writes are disabled by default.
-- Shell execution is disabled by default.
+- Reads and writes are limited to `ENSEMBLE_WORKSPACE`. When it is unset, the
+  workspace is the current directory; set it to point Ensemble at a fixed
+  project. The code-intelligence commands (`lsp`, `symbols`, `graph`) are not
+  workspace-guarded.
+- Writes are disabled by default. Even when enabled, `write` and `edit` refuse
+  anything under `.git` and the workspace-root `.ensemble/` directory (checkpoints
+  and sessions).
+- Shell execution is disabled by default. When enabled, `bash` runs with only
+  `PATH HOME USER LOGNAME LANG LC_ALL TERM TMPDIR TZ` from the environment, so API
+  keys are not inherited. It is **not** path-confined or a sandbox: it can `cd`
+  anywhere and write through the shell.
 - The Docker model mount is read-only.
-- Patch proposal mode should come before automatic writes.
 
 ## Setup
 
@@ -516,24 +525,40 @@ Tools are advertised only when the operator enables them:
 | `edit` | `ENSEMBLE_ALLOW_WRITES=true` | one exact unique replacement; snapshots the file to `.ensemble/checkpoints/` first |
 | `bash` | `ENSEMBLE_ALLOW_SHELL=true` | `bash -c` in the workspace, stdin closed, timeout, tail-truncated output |
 
-`read`, `write` and `edit` cannot leave `ENSEMBLE_WORKSPACE`. `bash` starts in
-the workspace but is **not** path-confined: enable it only inside the Docker
-sandbox or on a workspace you trust. Sessions are JSONL under
-`<workspace>/.ensemble/sessions/`. An `AGENTS.md` (or `CLAUDE.md`) in the
-workspace root is added to the system prompt, and matching skill cards are
-injected per prompt. The loop stops after `--max-turns` (default 25) or when it
-repeats the same tool calls. Models that print `<tool_call>` JSON as text instead
-of native tool calls are handled too.
+`read`, `write` and `edit` cannot leave `ENSEMBLE_WORKSPACE`, and `write`/`edit`
+refuse `.git` and the root `.ensemble/` directory. `bash` starts in the workspace
+but is **not** path-confined: enable it only inside the Docker sandbox or on a
+workspace you trust.
+
+Behavior worth knowing:
+
+- `read` streams only the requested window, truncates long output with a
+  continuation hint, and refuses binary files. `edit` preserves CRLF line endings.
+- `bash` keeps a bounded tail of output, kills the whole process group on timeout
+  or Ctrl-C, and gets a reduced environment (see Safety Defaults).
+- Sessions are JSONL under `<workspace>/.ensemble/sessions/`. `-c` resumes the
+  latest one, skipping a torn last line and dropping tool calls that never got a
+  result.
+- Each request sends a size-bounded copy of the history (about 48k characters by
+  default): oldest tool outputs are elided first, then whole leading turns. The
+  latest prompt is always kept and the stored session is unchanged.
+- An `AGENTS.md` (or `CLAUDE.md`) in the workspace root is added to the system
+  prompt, and matching skill cards from Ensemble's own `skills/` are injected per
+  prompt.
+- The loop stops after `--max-turns` (default 25) or when it repeats the same
+  tool calls (the repeat check resets for each prompt).
+- Models that print `<tool_call>` JSON as text instead of native tool calls are
+  handled, as are servers that ignore `stream: true` and return plain JSON.
 
 ## Milestone 3: Read-Only Repo Context
 
-By default, the workspace is `ENSEMBLE_WORKSPACE`:
+The workspace is `ENSEMBLE_WORKSPACE`, or the current directory when that is
+unset. Set it to mount Ensemble against a project other than the one you are
+standing in:
 
-```text
-/home/jarvis/projects/nexus
+```bash
+export ENSEMBLE_WORKSPACE=/path/to/your/project
 ```
-
-This is the project Ensemble is mounted against, not the Ensemble repo.
 
 List files:
 
@@ -555,20 +580,20 @@ ensemble ask "Summarize this file in five bullets." --file README.md
 
 ## Later Milestones
 
-Milestone 4: patch proposal mode
+Milestone 4: patch proposal mode (not implemented)
 
 - Generate unified diffs only.
 - Human applies patches manually.
 - No automatic writes.
 
-Milestone 5: controlled write mode
+Milestone 5: controlled write mode (partly implemented)
 
-- Allow writes only inside approved paths.
-- Require dry-run preview.
-- Keep an audit log.
+- Done: writes only inside the workspace, protected `.git`/`.ensemble` paths,
+  checkpoint before every edit, and an operator opt-in flag.
+- Not done: approved-path allowlists, dry-run preview, and an audit log.
 
-Shell tools should stay out until the read-only and patch proposal flows are
-boringly reliable.
+Shell access exists behind `ENSEMBLE_ALLOW_SHELL=true` but is not sandboxed; see
+Safety Defaults.
 
 ## License
 
@@ -580,6 +605,7 @@ conventions live in `AGENTS.md`.
 ```text
 /home/jarvis/projects/third-party/ensemble/
   AGENTS.md
+  LICENSE
   Makefile
   docker-compose.yml
   docker-compose.models.yml
